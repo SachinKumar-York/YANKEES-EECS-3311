@@ -7,9 +7,8 @@ import java.sql.SQLException;
 public class DBConnector {
     private static final String URL = "jdbc:mysql://localhost:3306/cnf";
     private static final String USER = "root";
-    private static final String PASSWORD = "Divyansh_5";
+    private static final String PASSWORD = "Sharma@123";
 
-    // Load driver once
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");

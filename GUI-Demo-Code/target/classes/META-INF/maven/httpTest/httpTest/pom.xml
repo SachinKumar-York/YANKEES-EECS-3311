@@ -28,7 +28,6 @@
         </repository>
     </repositories>
 	
-	
 	<dependencies>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>

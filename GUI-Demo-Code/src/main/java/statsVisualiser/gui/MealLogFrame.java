@@ -27,10 +27,14 @@ public class MealLogFrame extends JFrame {
     private final FoodDAO foodDAO = new FoodDAO();
     private final List<Food> allFoods;
 
-    public MealLogFrame() {
+    private final int userId;
+
+    public MealLogFrame(int userId) {
+        this.userId = userId;
+
         setTitle("Meal Logger");
         setSize(600, 500);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);  // So it doesn’t kill the app
         setLayout(new BorderLayout());
 
         // Meal details panel
@@ -96,15 +100,9 @@ public class MealLogFrame extends JFrame {
     }
 
     private void handleLogMeal(ActionEvent e) {
-        if (!Session.isLoggedIn()) {
-            JOptionPane.showMessageDialog(this, "Please log in first.");
-            return;
-        }
-
         String mealName = mealNameField.getText();
         String mealType = (String) mealTypeBox.getSelectedItem();
         Date mealDate = (Date) datePicker.getValue();
-        int userId = Session.getCurrentUserId();
 
         if (mealName.isEmpty() || selectedIngredients.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter a meal name and at least one ingredient.");
@@ -118,9 +116,5 @@ public class MealLogFrame extends JFrame {
         ingredientListModel.clear();
     }
 
-    public static void main(String[] args) {
-        Session.login(1);  // Simulate user login
-        SwingUtilities.invokeLater(() -> new MealLogFrame().setVisible(true));
-    }
+    // No need for main method anymore
 }
-
