@@ -25,10 +25,10 @@ public class Dashboard extends JFrame {
         topBar.add(homeBtn);
         add(topBar, BorderLayout.NORTH);
 
-        /* --- CENTER: Log Meal button --- */
+        /* --- CENTER: Log Meal button and View Logged Meals button --- */
         JPanel centerPanel = new JPanel();
-        JButton logMealBtn = new JButton("Log Meal");
 
+        JButton logMealBtn = new JButton("Log Meal");
         logMealBtn.setPreferredSize(new Dimension(120, 40));
         logMealBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
@@ -39,7 +39,20 @@ public class Dashboard extends JFrame {
             }
         });
 
+        JButton viewLoggedMealsBtn = new JButton("View Logged Meals");
+        viewLoggedMealsBtn.setPreferredSize(new Dimension(150, 40));
+        viewLoggedMealsBtn.addActionListener(e -> {
+            int userId = Session.getCurrentUserId();
+            if (userId > 0) {
+                new ViewMealsFrame(userId).setVisible(true);  // ✅ Opens meal viewer
+            } else {
+                JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+
         centerPanel.add(logMealBtn);
+        centerPanel.add(viewLoggedMealsBtn);
         add(centerPanel, BorderLayout.CENTER);
 
         /* --- Return to home --- */
@@ -52,4 +65,3 @@ public class Dashboard extends JFrame {
         setLocationRelativeTo(homeRef);
     }
 }
-

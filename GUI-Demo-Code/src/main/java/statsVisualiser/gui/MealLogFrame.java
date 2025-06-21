@@ -109,6 +109,17 @@ public class MealLogFrame extends JFrame {
             return;
         }
 
+        // Restrict logging to one meal per type (except snack)
+        if (!mealType.equalsIgnoreCase("snack")) {
+            boolean alreadyLogged = foodDAO.hasMealTypeLogged(userId, mealType, mealDate);
+            if (alreadyLogged) {
+                JOptionPane.showMessageDialog(this,
+                        "You have already logged a " + mealType + " for this date.",
+                        "Meal Already Logged", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         foodDAO.logMeal(userId, mealName, mealType, mealDate, selectedIngredients);
         JOptionPane.showMessageDialog(this, "Meal logged successfully.");
         mealNameField.setText("");
@@ -116,5 +127,4 @@ public class MealLogFrame extends JFrame {
         ingredientListModel.clear();
     }
 
-    // No need for main method anymore
 }

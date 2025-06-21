@@ -78,4 +78,68 @@ public class FoodDAO {
             e.printStackTrace();
         }
     }
+    
+    public boolean hasMealTypeLogged(int userId, String mealType, Date mealDate) {
+        String sql = "SELECT COUNT(*) FROM UserMeal um " +
+                     "JOIN Meal m ON um.MealID = m.MealID " +
+                     "WHERE um.user_id = ? AND m.MealType = ? AND m.MealDate = ?";
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, mealType);
+            stmt.setDate(3, new java.sql.Date(mealDate.getTime()));
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    public List<String> getLoggedMealsWithCaloriesForUser(int userId) {
+        List<String> meals = new ArrayList<>();
+        String sql =
+        	    "SELECT " +
+        	    "    m.MealID, " +
+        	    "    m.meal_name, " +
+        	    "    m.MealDate, " +
+        	    "    m.MealType, " +
+        	    "    ROUND(SUM((IFNULL(na.NutrientValue, 0) / 100) * mi.Qty_grams), 1) AS total_calories " +
+        	    "FROM usermeal um " +
+        	    "JOIN meal m ON um.MealID = m.MealID " +
+        	    "JOIN mealingredient mi ON m.MealID = mi.MealID " +
+        	    "JOIN nutrientamount na ON mi.FoodID = na.FoodID " +
+        	    "JOIN nutrientname nn ON na.NutrientNameID = nn.NutrientNameID " +
+        	    "WHERE um.user_id = ? " +
+        	    "  AND nn.NutrientName LIKE '%ENERGY%'" +
+        	    "GROUP BY m.MealID, m.meal_name, m.MealDate, m.MealType " +
+        	    "ORDER BY m.MealDate DESC, m.MealType";
+
+
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String mealName = rs.getString("meal_name");
+                    String mealType = rs.getString("MealType");
+                    String mealDate = rs.getDate("MealDate").toString();
+                    double calories = rs.getDouble("total_calories");
+
+                    String formatted = String.format(
+                            "<html>&#8226; <b>%s</b> (%s) - %s &nbsp;&nbsp;<i>[%.1f kcal]</i></html>",
+                            mealName, mealType, mealDate, calories);
+                    meals.add(formatted);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return meals;
+    }
+
+
 }
