@@ -66,6 +66,17 @@ public class CreateProfileDialog extends JDialog {
     private void error(String m) {
         JOptionPane.showMessageDialog(this, m, "Error", JOptionPane.ERROR_MESSAGE);
     }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            UserProfileDao dao = new UserProfileDao(); // Ensure DB connection works
+            JFrame dummyFrame = new JFrame(); // Dummy parent frame
+            Runnable onSuccess = () -> System.out.println("Profile created successfully!");
+            CreateProfileDialog dialog = new CreateProfileDialog(dummyFrame, dao, onSuccess);
+            dialog.setVisible(true);
+        });
+    }
+
 }
 
 

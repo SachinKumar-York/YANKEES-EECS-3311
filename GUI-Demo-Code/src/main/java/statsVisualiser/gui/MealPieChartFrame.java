@@ -21,16 +21,13 @@ public class MealPieChartFrame extends JFrame {
         this.userId = userId;
         this.mealId = mealId;
 
-        // ✅ Get macronutrients from DAO
         Map<String, Double> nutrients = dao.getMacronutrientsForMeal(userId, mealId);
 
-        // ✅ Print retrieved nutrients
         System.out.println("Meal ID: " + mealId + ", User ID: " + userId);
         if (nutrients.isEmpty()) {
             System.out.println("⚠️ No data found for this meal.");
         }
 
-        // ✅ Show warning if no data
         if (nutrients.isEmpty() ||
                 (nutrients.getOrDefault("PROT", 0.0) == 0 &&
                  nutrients.getOrDefault("FAT", 0.0) == 0 &&
@@ -42,10 +39,9 @@ public class MealPieChartFrame extends JFrame {
                     "Access Denied",
                     JOptionPane.WARNING_MESSAGE
             );
-            return; // ❌ don't show chart
+            return; 
         }
 
-        // ✅ Proceed with chart
         setTitle("Meal Nutrient Breakdown");
         setSize(600, 450);
         setLocationRelativeTo(null);
@@ -81,4 +77,16 @@ public class MealPieChartFrame extends JFrame {
 
         return dataset;
     }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            // Use dummy userId and mealId; replace with actual IDs if testing live DB
+            int dummyUserId = 1;
+            int dummyMealId = 1;
+
+            // Create and show the frame
+            new MealPieChartFrame(dummyUserId, dummyMealId).setVisible(true);
+        });
+    }
+
 }

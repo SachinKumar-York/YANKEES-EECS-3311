@@ -127,4 +127,11 @@ public class MealLogFrame extends JFrame {
         ingredientListModel.clear();
     }
 
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            int dummyUserId = 1; // Replace with a valid user ID from your DB if needed
+            new MealLogFrame(dummyUserId).setVisible(true);
+        });
+    }
+
 }

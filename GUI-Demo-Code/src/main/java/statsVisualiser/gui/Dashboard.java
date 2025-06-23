@@ -15,7 +15,7 @@ public class Dashboard extends JFrame {
         setSize(600, 400);
         setLayout(new BorderLayout());
 
-        /* --- TOP-RIGHT: User and Return Home --- */
+        //TOP-RIGHT: User and Return Home 
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         JButton userBtn = new JButton(user.getName());
@@ -33,7 +33,7 @@ public class Dashboard extends JFrame {
         logMealBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
-                new MealLogFrame(userId).setVisible(true);  // 🚀 open MealLog window
+                new MealLogFrame(userId).setVisible(true);  
             } else {
                 JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -44,7 +44,7 @@ public class Dashboard extends JFrame {
         viewLoggedMealsBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
-                new ViewMealsFrame(userId).setVisible(true);  // ✅ Opens meal viewer
+                new ViewMealsFrame(userId).setVisible(true);  
             } else {
                 JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -64,4 +64,35 @@ public class Dashboard extends JFrame {
         homeRef.setVisible(false);
         setLocationRelativeTo(homeRef);
     }
+    
+    public static void main(String[] args) {
+        // Dummy home frame (just a placeholder window)
+        JFrame homeFrame = new JFrame("Home");
+        homeFrame.setSize(400, 300);
+        homeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        homeFrame.setVisible(true);
+
+        // Create a dummy user profile (normally retrieved from DB)
+        UserProfile dummyUser = new UserProfile(
+            "John Doe",
+            "john@example.com",
+            "Male",
+            new java.util.Date(),  // Use current date as dummy DOB
+            1.75f, // height in meters
+            70f,   // weight in kg
+            "Metric"
+        );
+        dummyUser.setUserId(1); // Set a user ID to simulate login
+
+        // Simulate user session login
+        Session.login(dummyUser.getUserId());
+
+        // Launch the Dashboard
+        SwingUtilities.invokeLater(() -> {
+            new Dashboard(homeFrame, dummyUser).setVisible(true);
+        });
+    }
+
+
+
 }
