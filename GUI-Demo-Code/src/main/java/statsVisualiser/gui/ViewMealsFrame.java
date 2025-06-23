@@ -63,6 +63,7 @@
 package statsVisualiser.gui;
 
 import DAO.FoodDAO;
+import Models.Session;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,17 +76,15 @@ public class ViewMealsFrame extends JFrame {
     public ViewMealsFrame(int userId) {
         setTitle("Logged Meals");
         setSize(550, 450);
-        setLayout(new BorderLayout(10, 10)); // adds spacing
+        setLayout(new BorderLayout(10, 10));
         setLocationRelativeTo(null);
         getContentPane().setBackground(Color.WHITE);
 
-        // Title
         JLabel titleLabel = new JLabel(" Your Logged Meals", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // Meal list area
         DefaultListModel<String> listModel = new DefaultListModel<>();
         JList<String> mealList = new JList<>(listModel);
         mealList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -107,7 +106,7 @@ public class ViewMealsFrame extends JFrame {
             }
         }
 
-        // ✅ Added: Handle double-click to open pie chart window
+        // Handle double-click
         mealList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -116,28 +115,41 @@ public class ViewMealsFrame extends JFrame {
                     if (index != -1) {
                         String selectedValue = listModel.get(index);
                         int mealId = extractMealIdFromHtml(selectedValue);
-                        // Pass userId and mealId to the chart frame
-                        SwingUtilities.invokeLater(() -> new MealPieChartFrame(mealId).setVisible(true));
+
+                        if (mealId > 0 && Session.isLoggedIn()) {
+                            int currentUserId = Session.getCurrentUserId();
+                            System.out.println(mealId+""+currentUserId);
+                            new MealPieChartFrame(currentUserId, mealId).setVisible(true);
+                        } else {
+                            JOptionPane.showMessageDialog(ViewMealsFrame.this,
+                                    "User session is invalid or Meal ID is missing.",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 }
             }
         });
-
     }
 
-    // ✅ Added: Extract MealID from hidden span in HTML string
     private int extractMealIdFromHtml(String htmlString) {
         try {
-            int start = htmlString.indexOf("<span style='display:none'>") + 28;
+            String marker = "<span style='display:none'>";
+            int start = htmlString.indexOf(marker);
+            if (start == -1) return -1;
+
+            start += marker.length(); // ✅ Use dynamic length
             int end = htmlString.indexOf("</span>", start);
-            return Integer.parseInt(htmlString.substring(start, end));
+            if (end == -1) return -1;
+
+            String idStr = htmlString.substring(start, end).trim();
+            return Integer.parseInt(idStr);
         } catch (Exception e) {
             e.printStackTrace();
             return -1;
         }
     }
 
-    // Custom renderer to properly handle HTML content and spacing
+
     private static class HtmlListCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(

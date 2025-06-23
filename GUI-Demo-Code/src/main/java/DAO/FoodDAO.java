@@ -7,7 +7,9 @@ import DAO.DBConnector;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FoodDAO {
 
@@ -141,6 +143,40 @@ public class FoodDAO {
         return meals;
     }
 
+    public Map<String, Double> getMacronutrientsForMeal(int userId, int mealId) {
+        Map<String, Double> nutrientMap = new HashMap<>();
+
+        String sql =
+                "SELECT nn.NutrientSymbol, " +
+                "       ROUND(SUM((IFNULL(na.NutrientValue, 0) / 100) * mi.Qty_grams), 2) AS total_amount " +
+                "FROM meal m " +
+                "JOIN usermeal um ON m.MealID = um.MealID " +
+                "JOIN mealingredient mi ON m.MealID = mi.MealID " +
+                "JOIN nutrientamount na ON mi.FoodID = na.FoodID " +
+                "JOIN nutrientname nn ON na.NutrientNameID = nn.NutrientNameID " +
+                "WHERE m.MealID = ? AND um.user_id = ? AND nn.NutrientSymbol IN ('PROT', 'FAT', 'CARB') " +
+                "GROUP BY nn.NutrientSymbol";
+
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, mealId);
+            stmt.setInt(2, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String nutrient = rs.getString("NutrientSymbol");
+                    double amount = rs.getDouble("total_amount");
+                    System.out.println("Fetched nutrient: " + nutrient + " = " + amount); // ✅ Debug print
+                    nutrientMap.put(nutrient, amount);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return nutrientMap;
+    }
 
 
 }
