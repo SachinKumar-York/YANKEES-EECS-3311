@@ -80,11 +80,10 @@ public class MealPieChartFrame extends JFrame {
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Use dummy userId and mealId; replace with actual IDs if testing live DB
+           
             int dummyUserId = 1;
             int dummyMealId = 1;
 
-            // Create and show the frame
             new MealPieChartFrame(dummyUserId, dummyMealId).setVisible(true);
         });
     }

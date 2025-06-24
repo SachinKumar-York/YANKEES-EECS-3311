@@ -25,7 +25,6 @@ public class Dashboard extends JFrame {
         topBar.add(homeBtn);
         add(topBar, BorderLayout.NORTH);
 
-        /* --- CENTER: Log Meal button and View Logged Meals button --- */
         JPanel centerPanel = new JPanel();
 
         JButton logMealBtn = new JButton("Log Meal");
@@ -55,7 +54,7 @@ public class Dashboard extends JFrame {
         centerPanel.add(viewLoggedMealsBtn);
         add(centerPanel, BorderLayout.CENTER);
 
-        /* --- Return to home --- */
+
         homeBtn.addActionListener(e -> {
             homeRef.setVisible(true);
             dispose();
@@ -66,7 +65,6 @@ public class Dashboard extends JFrame {
     }
     
     public static void main(String[] args) {
-        // Dummy home frame (just a placeholder window)
         JFrame homeFrame = new JFrame("Home");
         homeFrame.setSize(400, 300);
         homeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -77,12 +75,12 @@ public class Dashboard extends JFrame {
             "John Doe",
             "john@example.com",
             "Male",
-            new java.util.Date(),  // Use current date as dummy DOB
-            1.75f, // height in meters
-            70f,   // weight in kg
+            new java.util.Date(),  
+            1.75f, 
+            70f,   
             "Metric"
         );
-        dummyUser.setUserId(1); // Set a user ID to simulate login
+        dummyUser.setUserId(1); 
 
         // Simulate user session login
         Session.login(dummyUser.getUserId());

@@ -54,13 +54,12 @@ public class EditProfileDialog extends JDialog {
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Dummy frame to act as owner
             JFrame dummyFrame = new JFrame();
             dummyFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             dummyFrame.setSize(300, 200);
             dummyFrame.setVisible(true);
 
-            // Dummy UserProfile with sample data
+            
             UserProfile dummyProfile = new UserProfile(
                     "John Doe",
                     "john@example.com",
@@ -72,10 +71,10 @@ public class EditProfileDialog extends JDialog {
             );
             dummyProfile.setUserId(1);
 
-            // Minimal UserProfileDao with no real DB call
+   
             UserProfileDao dummyDao = new UserProfileDao();
 
-            // Open the EditProfileDialog (no real save behavior needed)
+
             new EditProfileDialog(dummyFrame, dummyDao, dummyProfile, () -> {}).setVisible(true);
         });
     }

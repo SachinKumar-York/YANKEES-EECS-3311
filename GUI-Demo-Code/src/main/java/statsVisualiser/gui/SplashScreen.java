@@ -18,7 +18,7 @@ public class SplashScreen extends JFrame {
         setSize(400, 500);
         setLayout(new BorderLayout());
 
-        /* ---- CREATE PROFILE button at bottom ---- */
+  
         JButton createBtn = new JButton("Create Profile");
         createBtn.setPreferredSize(new Dimension(150, 40));
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));

@@ -30,6 +30,8 @@ public class FoodDAO {
 
         return foods;
     }
+    
+    
 
     public void logMeal(int userId, String mealName, String mealType, Date mealDate, List<MealIngredient> ingredients) {
         String insertMeal = "INSERT INTO Meal (meal_name, MealDate, MealType) VALUES (?, ?, ?)";
