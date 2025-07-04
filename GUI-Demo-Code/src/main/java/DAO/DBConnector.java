@@ -5,27 +5,36 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DBConnector {
-    private static final String URL = "jdbc:mysql://localhost:3306/cnf";
-    private static final String USER = "root";
-    private static final String PASSWORD = "Divyansh_5";
 
-    
-    
-    static {
+    public enum DBType {
+        MYSQL,
+        POSTGRES
+    }
+
+    // Factory method to get connection
+    public static Connection getConnection(DBType type) throws SQLException {
+        switch (type) {
+            case MYSQL:
+                return getMySQLConnection();
+            case POSTGRES:
+                // Placeholder: not implemented yet
+                System.out.println("Postgres support coming soon...");
+                return null;
+            default:
+                throw new IllegalArgumentException("Unsupported DB type: " + type);
+        }
+    }
+
+    // MySQL connection logic
+    private static Connection getMySQLConnection() throws SQLException {
+        String url = "jdbc:mysql://localhost:3306/cnf";
+        String user = "root";
+        String password = "Divyansh_5";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        return DriverManager.getConnection(url, user, password);
     }
-
-    
-    
-    public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
-    }
-    
-    
 }
-
-

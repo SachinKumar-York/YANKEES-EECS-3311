@@ -2,10 +2,10 @@ package Models;
 
 import java.util.Map;
 
-public class NutritionalGoal {
+public class NutritionalGoal implements GoalComponent {
     private String nutrient;
     private float delta;
-    private boolean increase; 
+    private boolean increase;
 
     public NutritionalGoal(String nutrient, float delta, boolean increase) {
         this.nutrient = nutrient;
@@ -13,9 +13,11 @@ public class NutritionalGoal {
         this.increase = increase;
     }
 
+    @Override
     public boolean isGoalMet(Map<String, Float> original, Map<String, Float> alternative) {
         float orig = original.getOrDefault(nutrient, 0f);
         float alt = alternative.getOrDefault(nutrient, 0f);
+
         if (increase) {
             return alt >= orig + delta;
         } else {
@@ -34,4 +36,5 @@ public class NutritionalGoal {
     public boolean isIncrease() {
         return increase;
     }
+  
 }

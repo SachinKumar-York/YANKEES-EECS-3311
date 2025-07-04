@@ -1,15 +1,13 @@
 package Models;
 
-import java.util.List;
-
 public class GoalRequest {
-    private List<NutritionalGoal> goals;
+    private GoalComponent goalComponent;
 
-    public GoalRequest(List<NutritionalGoal> goals) {
-        this.goals = goals;
+    public GoalRequest(GoalComponent goalComponent) {
+        this.goalComponent = goalComponent;
     }
 
-    public List<NutritionalGoal> getGoals() {
-        return goals;
+    public GoalComponent getGoalComponent() {
+        return goalComponent;
     }
 }

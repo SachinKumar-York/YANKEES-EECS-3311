@@ -7,9 +7,9 @@ import java.sql.*;
 public class UserProfileDao {
 
 	public int insertUserProfile(UserProfile userProfile) {
-	    String sql = "INSERT INTO user (name, email, sex, dob, height_in_meter, weight_in_KG, units) VALUES (?, ?, ?, ?, ?, ?, ?)";
+	    String sql = "INSERT INTO user (name, email, sex, dob, height, weight, units) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-	    try (Connection conn = DBConnector.getConnection();
+	    try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
 	         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
 	        stmt.setString(1, userProfile.getName());
@@ -45,7 +45,7 @@ public class UserProfileDao {
         List<UserProfile> users = new ArrayList<>();
         String sql = "SELECT * FROM user";
 
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -55,8 +55,8 @@ public class UserProfileDao {
                     rs.getString("email"),
                     rs.getString("sex"),
                     rs.getDate("dob"),
-                    rs.getFloat("height_in_meter"),
-                    rs.getFloat("weight_in_KG"),
+                    rs.getFloat("height"),
+                    rs.getFloat("weight"),
                     rs.getString("units")
                 );
                 user.setUserId(rs.getInt("user_id"));
@@ -73,9 +73,9 @@ public class UserProfileDao {
 
 
     public boolean updateUserProfile(int userId, float newHeight, float newWeight, String newUnits) {
-        String sql = "UPDATE user SET height_in_meter = ?, weight_in_KG = ?, units = ? WHERE user_id = ?";
+        String sql = "UPDATE user SET height = ?, weight = ?, units = ? WHERE user_id = ?";
 
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setFloat(1, newHeight);

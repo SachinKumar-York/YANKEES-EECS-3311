@@ -15,7 +15,7 @@ public class Dashboard extends JFrame {
         setSize(600, 400);
         setLayout(new BorderLayout());
 
-        //TOP-RIGHT: User and Return Home 
+        // TOP-RIGHT: User and Return Home 
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         JButton userBtn = new JButton(user.getName());
@@ -32,7 +32,7 @@ public class Dashboard extends JFrame {
         logMealBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
-                new MealLogFrame(userId).setVisible(true);  
+                new MealLogFrame(userId).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -43,17 +43,29 @@ public class Dashboard extends JFrame {
         viewLoggedMealsBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
-                new ViewMealsFrame(userId).setVisible(true);  
+                new ViewMealsFrame(userId).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
+        // New button: Add Nutrition Goal
+        JButton addNutritionGoalBtn = new JButton("Add Nutrition Goal");
+        addNutritionGoalBtn.setPreferredSize(new Dimension(160, 40));
+        addNutritionGoalBtn.addActionListener(e -> {
+            int userId = Session.getCurrentUserId();
+            if (userId > 0) {
+                // TODO: Implement AddGoalMealListFrame to list meals and allow adding goals
+                new AddGoalMealListFrame(userId).setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         centerPanel.add(logMealBtn);
         centerPanel.add(viewLoggedMealsBtn);
+        centerPanel.add(addNutritionGoalBtn);  // add new button here
         add(centerPanel, BorderLayout.CENTER);
-
 
         homeBtn.addActionListener(e -> {
             homeRef.setVisible(true);
@@ -63,7 +75,7 @@ public class Dashboard extends JFrame {
         homeRef.setVisible(false);
         setLocationRelativeTo(homeRef);
     }
-    
+
     public static void main(String[] args) {
         JFrame homeFrame = new JFrame("Home");
         homeFrame.setSize(400, 300);
@@ -75,12 +87,12 @@ public class Dashboard extends JFrame {
             "John Doe",
             "john@example.com",
             "Male",
-            new java.util.Date(),  
-            1.75f, 
-            70f,   
+            new java.util.Date(),
+            1.75f,
+            70f,
             "Metric"
         );
-        dummyUser.setUserId(1); 
+        dummyUser.setUserId(1);
 
         // Simulate user session login
         Session.login(dummyUser.getUserId());
@@ -90,7 +102,4 @@ public class Dashboard extends JFrame {
             new Dashboard(homeFrame, dummyUser).setVisible(true);
         });
     }
-
-
-
 }

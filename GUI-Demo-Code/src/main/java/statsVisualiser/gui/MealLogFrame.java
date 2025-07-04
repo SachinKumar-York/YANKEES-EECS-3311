@@ -1,10 +1,7 @@
 package statsVisualiser.gui;
 
 import DAO.FoodDAO;
-import Models.Food;
-import Models.MealIngredient;
-import Models.Session;
-
+import Models.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -26,61 +23,82 @@ public class MealLogFrame extends JFrame {
     private final List<MealIngredient> selectedIngredients = new ArrayList<>();
     private final FoodDAO foodDAO = new FoodDAO();
     private final List<Food> allFoods;
+    private final MealValidationContext validationContext;
 
     private final int userId;
 
     public MealLogFrame(int userId) {
         this.userId = userId;
 
-        setTitle("Meal Logger");
-        setSize(600, 500);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);  // So it doesn’t kill the app
-        setLayout(new BorderLayout());
+        setTitle("Log a New Meal");
+        setSize(650, 550);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout(10, 10));
+        getContentPane().setBackground(Color.WHITE);
 
-        // Meal details panel
-        JPanel mealDetails = new JPanel(new GridLayout(3, 2));
-        mealDetails.add(new JLabel("Meal Name:"));
+        // Meal Validation Strategies
+        validationContext = new MealValidationContext();
+        validationContext.addValidator(new SingleMealPerDayValidator(foodDAO));
+
+        // Title label
+        JLabel header = new JLabel(" Log Your Meal", SwingConstants.CENTER);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        header.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        add(header, BorderLayout.NORTH);
+
+        // Meal Info Panel (Name, Type, Date)
+        JPanel mealDetails = new JPanel(new GridLayout(3, 2, 10, 10));
+        mealDetails.setBorder(BorderFactory.createTitledBorder("Meal Details"));
         mealNameField = new JTextField();
-        mealDetails.add(mealNameField);
-
-        mealDetails.add(new JLabel("Meal Type:"));
         mealTypeBox = new JComboBox<>(new String[]{"breakfast", "lunch", "snack", "dinner"});
-        mealDetails.add(mealTypeBox);
-
-        mealDetails.add(new JLabel("Meal Date:"));
         datePicker = new JSpinner(new SpinnerDateModel());
         datePicker.setEditor(new JSpinner.DateEditor(datePicker, "yyyy-MM-dd"));
+
+        mealDetails.add(new JLabel("Meal Name:"));
+        mealDetails.add(mealNameField);
+        mealDetails.add(new JLabel("Meal Type:"));
+        mealDetails.add(mealTypeBox);
+        mealDetails.add(new JLabel("Meal Date:"));
         mealDetails.add(datePicker);
+        add(mealDetails, BorderLayout.WEST);
 
-        add(mealDetails, BorderLayout.NORTH);
+        // Ingredient Input and List Panel
+        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
+        centerPanel.setBorder(BorderFactory.createTitledBorder("Meal Ingredients"));
 
-        // Food selector
-        JPanel foodPanel = new JPanel();
-        foodPanel.add(new JLabel("Ingredient:"));
+        // Ingredient input panel
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         allFoods = foodDAO.getAllFoods();
         foodCombo = new JComboBox<>(allFoods.toArray(new Food[0]));
         foodCombo.setEditable(true);
-        foodPanel.add(foodCombo);
-
-        foodPanel.add(new JLabel("Qty (g):"));
         qtyField = new JTextField(5);
-        foodPanel.add(qtyField);
+        addBtn = new JButton("Add");
 
-        addBtn = new JButton("Add Ingredient");
-        foodPanel.add(addBtn);
+        inputPanel.add(new JLabel("Ingredient:"));
+        inputPanel.add(foodCombo);
+        inputPanel.add(new JLabel("Qty (g):"));
+        inputPanel.add(qtyField);
+        inputPanel.add(addBtn);
 
-        add(foodPanel, BorderLayout.CENTER);
-
-        // Ingredient list
+        // Ingredient list panel
         ingredientListModel = new DefaultListModel<>();
         ingredientJList = new JList<>(ingredientListModel);
-        add(new JScrollPane(ingredientJList), BorderLayout.EAST);
+        ingredientJList.setBackground(new Color(245, 250, 255));
+        ingredientJList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JScrollPane scrollPane = new JScrollPane(ingredientJList);
+        scrollPane.setPreferredSize(new Dimension(300, 200));
 
-        // Submit
+        centerPanel.add(inputPanel, BorderLayout.NORTH);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
+
+        // Log meal button
         logMealBtn = new JButton("Log Meal");
-        add(logMealBtn, BorderLayout.SOUTH);
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottomPanel.add(logMealBtn);
+        add(bottomPanel, BorderLayout.SOUTH);
 
-        // Event listeners
+        // Listeners
         addBtn.addActionListener(this::handleAddIngredient);
         logMealBtn.addActionListener(this::handleLogMeal);
     }
@@ -89,13 +107,18 @@ public class MealLogFrame extends JFrame {
         Food food = (Food) foodCombo.getSelectedItem();
         String qtyText = qtyField.getText();
 
+        if (food == null || food.getFoodDescription() == null) {
+            JOptionPane.showMessageDialog(this, "Please select a valid food item.");
+            return;
+        }
+
         try {
             double qty = Double.parseDouble(qtyText);
             selectedIngredients.add(new MealIngredient(food, qty));
             ingredientListModel.addElement(food.getFoodDescription() + " - " + qty + "g");
             qtyField.setText("");
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Enter valid quantity.");
+            JOptionPane.showMessageDialog(this, "Enter a valid quantity.");
         }
     }
 
@@ -105,23 +128,22 @@ public class MealLogFrame extends JFrame {
         Date mealDate = (Date) datePicker.getValue();
 
         if (mealName.isEmpty() || selectedIngredients.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a meal name and at least one ingredient.");
+            JOptionPane.showMessageDialog(this, "Please enter a meal name and add at least one ingredient.");
             return;
         }
 
-        // Restrict logging to one meal per type (except snack)
-        if (!mealType.equalsIgnoreCase("snack")) {
-            boolean alreadyLogged = foodDAO.hasMealTypeLogged(userId, mealType, mealDate);
-            if (alreadyLogged) {
-                JOptionPane.showMessageDialog(this,
-                        "You have already logged a " + mealType + " for this date.",
-                        "Meal Already Logged", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+        boolean valid = validationContext.validate(userId, mealType, mealDate);
+        if (!valid) {
+            JOptionPane.showMessageDialog(this,
+                String.join("\n", validationContext.getErrorMessages()),
+                "Validation Error", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
         foodDAO.logMeal(userId, mealName, mealType, mealDate, selectedIngredients);
         JOptionPane.showMessageDialog(this, "Meal logged successfully.");
+
+        // Reset
         mealNameField.setText("");
         selectedIngredients.clear();
         ingredientListModel.clear();
@@ -129,9 +151,10 @@ public class MealLogFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            int dummyUserId = 1; // Replace with a valid user ID from your DB if needed
-            new MealLogFrame(dummyUserId).setVisible(true);
+            int dummyUserId = 1;
+            MealLogFrame frame = new MealLogFrame(dummyUserId);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
         });
     }
-
 }

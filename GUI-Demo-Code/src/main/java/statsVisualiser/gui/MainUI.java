@@ -488,7 +488,7 @@ public class MainUI extends JFrame {
 	public static void main(String[] args) {
 		
 		//jdbc connector eg:
-		try (Connection conn = DBConnector.getConnection()) {
+		try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);) {
             // Use connection here
             System.out.println("Connected!");
             // ... your DB operations ...

@@ -17,7 +17,7 @@ public class FoodDAO {
         List<Food> foods = new ArrayList<>();
 
         String sql = "SELECT FoodID, FoodDescription FROM FoodName ORDER BY FoodDescription";
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -38,7 +38,7 @@ public class FoodDAO {
         String insertUserMeal = "INSERT INTO UserMeal (user_id, MealID) VALUES (?, ?)";
         String insertMealIngredient = "INSERT INTO MealIngredient (MealID, FoodID, Qty_grams) VALUES (?, ?, ?)";
 
-        try (Connection conn = DBConnector.getConnection()) {
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);) {
             conn.setAutoCommit(false);
 
             // Insert Meal
@@ -87,7 +87,7 @@ public class FoodDAO {
         String sql = "SELECT COUNT(*) FROM UserMeal um " +
                      "JOIN Meal m ON um.MealID = m.MealID " +
                      "WHERE um.user_id = ? AND m.MealType = ? AND m.MealDate = ?";
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             stmt.setString(2, mealType);
@@ -118,11 +118,11 @@ public class FoodDAO {
             "JOIN nutrientamount na ON mi.FoodID = na.FoodID " +
             "JOIN nutrientname nn ON na.NutrientNameID = nn.NutrientNameID " +
             "WHERE um.user_id = ? " +
-            "  AND nn.NutrientName LIKE '%ENERGY%'" +
+            "  AND nn.NutrientSymbol = 'KCAL' " +  
             "GROUP BY m.MealID, m.meal_name, m.MealDate, m.MealType " +
             "ORDER BY m.MealDate DESC, m.MealType";
 
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -145,6 +145,7 @@ public class FoodDAO {
         return meals;
     }
 
+
     public Map<String, Double> getMacronutrientsForMeal(int userId, int mealId) {
         Map<String, Double> nutrientMap = new HashMap<>();
 
@@ -159,7 +160,7 @@ public class FoodDAO {
                 "WHERE m.MealID = ? AND um.user_id = ? AND nn.NutrientSymbol IN ('PROT', 'FAT', 'CARB') " +
                 "GROUP BY nn.NutrientSymbol";
 
-        try (Connection conn = DBConnector.getConnection();
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, mealId);
@@ -179,6 +180,32 @@ public class FoodDAO {
 
         return nutrientMap;
     }
+    
+    public List<MealIngredient> getMealIngredients(int mealId) {
+        List<MealIngredient> ingredients = new ArrayList<>();
+        String sql = "SELECT mi.FoodID, fn.FoodDescription, mi.Qty_grams " +
+                     "FROM mealingredient mi " +
+                     "JOIN foodname fn ON mi.FoodID = fn.FoodID " +
+                     "WHERE mi.MealID = ?";
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, mealId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long foodId = rs.getLong("FoodID");
+                    String description = rs.getString("FoodDescription");
+                    double quantity = rs.getDouble("Qty_grams");
+                    Food food = new Food(foodId, description);
+                    MealIngredient mi = new MealIngredient(food, quantity);
+                    ingredients.add(mi);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ingredients;
+    }
+
 
 
 }
