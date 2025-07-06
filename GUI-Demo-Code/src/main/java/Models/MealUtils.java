@@ -12,19 +12,43 @@ public class MealUtils {
      * Build a new Meal by replacing one ingredient (original food) with a suggested food
      * while keeping the quantity the same.
      */
-    public static Meal buildSwappedMeal(Meal originalMeal, SwapSuggestion suggestion) {
-        if (originalMeal == null || suggestion == null) return null;
+//    public static Meal buildSwappedMeal(Meal originalMeal, SwapSuggestion suggestion) {
+//        if (originalMeal == null || suggestion == null) return null;
+//
+//        List<MealIngredient> newIngredients = new ArrayList<>();
+//        for (MealIngredient mi : originalMeal.getItems()) {
+//            if (mi.getFood().equals(suggestion.getOriginal())) {
+//                newIngredients.add(new MealIngredient(suggestion.getSuggested(), mi.getQuantity()));
+//            } else {
+//                newIngredients.add(mi);
+//            }
+//        }
+//        return new Meal(newIngredients);
+//    }
+    
+    public static Meal buildSwappedMeal(Meal meal, SwapSuggestion suggestion) {
+        List<MealIngredient> newItems = new ArrayList<>();
+        boolean swapApplied = false;
 
-        List<MealIngredient> newIngredients = new ArrayList<>();
-        for (MealIngredient mi : originalMeal.getItems()) {
-            if (mi.getFood().equals(suggestion.getOriginal())) {
-                newIngredients.add(new MealIngredient(suggestion.getSuggested(), mi.getQuantity()));
+        for (MealIngredient mi : meal.getItems()) {
+            if (mi.getFood().getFoodId() == suggestion.getOriginal().getFoodId()) {
+                System.out.println("Swapping ingredient: " + mi.getFood().getFoodDescription());
+                MealIngredient swapped = new MealIngredient(suggestion.getSuggested(), mi.getQuantity());
+                newItems.add(swapped);
+                swapApplied = true;
             } else {
-                newIngredients.add(mi);
+                newItems.add(mi);
             }
         }
-        return new Meal(newIngredients);
+
+        if (!swapApplied) {
+            System.out.println("No matching ingredient found in meal for swap.");
+        }
+
+        return new Meal(newItems);
     }
+    
+
 
     /**
      * Calculate total nutrient amounts for a meal with default nutrient symbols and NutrientDatabase.
