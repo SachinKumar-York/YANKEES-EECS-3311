@@ -95,7 +95,7 @@ public class AddNutritionGoalFrame extends JFrame {
         JPanel goal1Row = new JPanel(new FlowLayout(FlowLayout.LEFT));
         goal1Row.add(new JLabel("Nutrient:"));
         goal1Row.add(nutrientBox1);
-        goal1Row.add(new JLabel("Delta:"));
+        goal1Row.add(new JLabel("Change (at least):"));
         goal1Row.add(deltaField1);
         goal1Row.add(increaseBox1);
         goalContainer.add(goal1Row);
@@ -112,7 +112,7 @@ public class AddNutritionGoalFrame extends JFrame {
         JPanel goal2Row = new JPanel(new FlowLayout(FlowLayout.LEFT));
         goal2Row.add(new JLabel("Nutrient:"));
         goal2Row.add(nutrientBox2);
-        goal2Row.add(new JLabel("Delta:"));
+        goal2Row.add(new JLabel("Change (at least):"));
         goal2Row.add(deltaField2);
         goal2Row.add(increaseBox2);
         secondGoalPanel.add(goal2Row, BorderLayout.CENTER);
@@ -172,7 +172,7 @@ public class AddNutritionGoalFrame extends JFrame {
                         "No suitable food swaps found for the given goals.",
                         "No Suggestions", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions);
+                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal);
                 suggestionsFrame.setVisible(true);
             }
 

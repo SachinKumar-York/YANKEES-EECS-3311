@@ -1,12 +1,11 @@
 package Models;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CompositeGoal implements GoalComponent {
     private static final int MAX_GOALS = 2;
-    private List<GoalComponent> subGoals = new ArrayList<>();
+    private final List<GoalComponent> subGoals = new ArrayList<>();
 
     public void addGoal(GoalComponent goal) {
         if (subGoals.size() >= MAX_GOALS) {
@@ -27,5 +26,12 @@ public class CompositeGoal implements GoalComponent {
 
     public List<GoalComponent> getSubGoals() {
         return subGoals;
+    }
+
+    @Override
+    public Set<String> getTargetNutrients() {
+        return subGoals.stream()
+                .flatMap(gc -> gc.getTargetNutrients().stream())
+                .collect(Collectors.toSet());
     }
 }

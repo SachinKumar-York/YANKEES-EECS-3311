@@ -1,6 +1,7 @@
 package Models;
 
 import java.util.Map;
+import java.util.Set;
 
 public class NutritionalGoal implements GoalComponent {
     private String nutrient;
@@ -36,5 +37,12 @@ public class NutritionalGoal implements GoalComponent {
     public boolean isIncrease() {
         return increase;
     }
+    
+    @Override
+    public Set<String> getTargetNutrients() {
+        return Set.of(nutrient);
+    }
+
+
   
 }
