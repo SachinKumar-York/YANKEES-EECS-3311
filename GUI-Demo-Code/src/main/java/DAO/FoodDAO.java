@@ -8,8 +8,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FoodDAO {
 
@@ -208,9 +211,11 @@ public class FoodDAO {
     
     public Map<String, Double> getAverageDailyNutrientIntake(int userId, Date startDate, Date endDate) {
         Map<String, Double> nutrientSums = new HashMap<>();
+        Set<Date> loggedMealDates = new HashSet<>();
 
-        String sql =
-        	    "SELECT nn.NutrientSymbol, " +
+        // 1. Get all nutrients summed for the range
+        String nutrientSql = 
+        	    "SELECT nn.NutrientName, " +
         	    "       SUM((IFNULL(na.NutrientValue, 0) / 100) * mi.Qty_grams) AS totalAmount " +
         	    "FROM usermeal um " +
         	    "JOIN meal m ON um.MealID = m.MealID " +
@@ -218,37 +223,113 @@ public class FoodDAO {
         	    "JOIN nutrientamount na ON mi.FoodID = na.FoodID " +
         	    "JOIN nutrientname nn ON na.NutrientNameID = nn.NutrientNameID " +
         	    "WHERE um.user_id = ? AND m.MealDate BETWEEN ? AND ? " +
-        	    "GROUP BY nn.NutrientSymbol";
+        	    "GROUP BY nn.NutrientName";
 
+
+        // 2. Get distinct logged meal dates in the range
+        String dateSql = 
+        	    "SELECT DISTINCT m.MealDate " +
+        	    "FROM usermeal um " +
+        	    "JOIN meal m ON um.MealID = m.MealID " +
+        	    "WHERE um.user_id = ? AND m.MealDate BETWEEN ? AND ?";
+
+
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL)) {
+
+            // Fetch nutrient sums
+            try (PreparedStatement stmt = conn.prepareStatement(nutrientSql)) {
+                stmt.setInt(1, userId);
+                stmt.setDate(2, new java.sql.Date(startDate.getTime()));
+                stmt.setDate(3, new java.sql.Date(endDate.getTime()));
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        String nutrient = rs.getString("NutrientName");
+                        double totalAmount = rs.getDouble("totalAmount");
+                        nutrientSums.put(nutrient, totalAmount);
+                    }
+                }
+            }
+
+            // Fetch distinct meal dates
+            try (PreparedStatement stmt = conn.prepareStatement(dateSql)) {
+                stmt.setInt(1, userId);
+                stmt.setDate(2, new java.sql.Date(startDate.getTime()));
+                stmt.setDate(3, new java.sql.Date(endDate.getTime()));
+
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        loggedMealDates.add(rs.getDate("MealDate"));
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        int activeDays = loggedMealDates.size();
+        if (activeDays <= 0) activeDays = 1;
+
+        // Divide totals to get average per active (logged) day
+        for (Map.Entry<String, Double> entry : nutrientSums.entrySet()) {
+            nutrientSums.put(entry.getKey(), entry.getValue() / activeDays);
+        }
+
+        return nutrientSums;
+    }
+    
+    public Map<String, Double> getUserFoodGroupPercentages(int userId) {
+        Map<String, Double> rawGrams = new HashMap<>();
+
+        String sql = 
+        	    "SELECT fg.FoodGroupID, SUM(mi.Qty_grams) as totalGrams " +
+        	    "FROM usermeal um " +
+        	    "JOIN meal m ON um.MealID = m.MealID " +
+        	    "JOIN mealingredient mi ON m.MealID = mi.MealID " +
+        	    "JOIN foodname fn ON mi.FoodID = fn.FoodID " +
+        	    "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
+        	    "WHERE um.user_id = ? " +
+        	    "GROUP BY fg.FoodGroupID";
+
+
+        Map<Integer, String> cfgMap = Map.ofEntries(
+            Map.entry(9, "Vegetables & Fruits"), Map.entry(11, "Vegetables & Fruits"),
+            Map.entry(8, "Whole Grains"), Map.entry(18, "Whole Grains"), Map.entry(20, "Whole Grains"),
+            Map.entry(1, "Protein Foods"), Map.entry(5, "Protein Foods"), Map.entry(7, "Protein Foods"),
+            Map.entry(10, "Protein Foods"), Map.entry(12, "Protein Foods"), Map.entry(13, "Protein Foods"),
+            Map.entry(15, "Protein Foods"), Map.entry(16, "Protein Foods"), Map.entry(17, "Protein Foods")
+        );
 
         try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, userId);
-            stmt.setDate(2, new java.sql.Date(startDate.getTime()));
-            stmt.setDate(3, new java.sql.Date(endDate.getTime()));
-
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    String nutrient = rs.getString("NutrientSymbol");
-                    double totalAmount = rs.getDouble("totalAmount");
-                    nutrientSums.put(nutrient, totalAmount);
+                    int groupId = rs.getInt("FoodGroupID");
+                    double grams = rs.getDouble("totalGrams");
+                    String cfgCategory = cfgMap.get(groupId);
+                    if (cfgCategory != null) {
+                        rawGrams.merge(cfgCategory, grams, Double::sum);
+                    }
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        // ✅ Calculate inclusive number of days inline
-        long numDays = ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (numDays <= 0) numDays = 1; // fallback for same-day or edge cases
-
-        // ✅ Divide totals to get average per day
-        for (Map.Entry<String, Double> entry : nutrientSums.entrySet()) {
-            nutrientSums.put(entry.getKey(), entry.getValue() / numDays);
+        // Normalize to percentage
+        double total = rawGrams.values().stream().mapToDouble(Double::doubleValue).sum();
+        Map<String, Double> percentMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Double> entry : rawGrams.entrySet()) {
+            percentMap.put(entry.getKey(), (entry.getValue() / total) * 100.0);
         }
 
-        return nutrientSums;
+
+        return percentMap;
     }
+
+
 
 }

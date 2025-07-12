@@ -91,6 +91,33 @@ public class UserProfileDao {
             return false;
         }
     }
+    
+    public UserProfile getUserProfile(int userId) {
+        String sql = "SELECT * FROM user WHERE user_id = ?";
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    UserProfile user = new UserProfile(
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("sex"),
+                            rs.getDate("dob"),
+                            rs.getFloat("height"),
+                            rs.getFloat("weight"),
+                            rs.getString("units")
+                    );
+                    user.setUserId(rs.getInt("user_id"));
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
 
 

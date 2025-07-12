@@ -1,5 +1,6 @@
 package Models;
 
+import java.util.Calendar;
 import java.util.Date;
 
 public class UserProfile {
@@ -45,4 +46,17 @@ public class UserProfile {
     public void setHeightInMeter(float heightInMeter) { this.heightInMeter = heightInMeter; }
     public void setWeightInKG(float weightInKG) { this.weightInKG = weightInKG; }
     public void setUnits(String units) { this.units = units; }
+    
+    public int getAge() {
+        Calendar dobCal = Calendar.getInstance();
+        dobCal.setTime(dob);
+        Calendar now = Calendar.getInstance();
+
+        int age = now.get(Calendar.YEAR) - dobCal.get(Calendar.YEAR);
+        if (now.get(Calendar.DAY_OF_YEAR) < dobCal.get(Calendar.DAY_OF_YEAR)) {
+            age--;
+        }
+        return age;
+    }
+
     }
