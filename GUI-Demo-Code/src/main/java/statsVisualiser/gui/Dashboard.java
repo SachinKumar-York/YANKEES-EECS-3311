@@ -55,8 +55,19 @@ public class Dashboard extends JFrame {
         addNutritionGoalBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
-                // TODO: Implement AddGoalMealListFrame to list meals and allow adding goals
                 new AddGoalMealListFrame(userId).setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // ✅ New button: View Daily Nutrient Intake
+        JButton viewDailyIntakeBtn = new JButton("View Daily Nutrient Intake");
+        viewDailyIntakeBtn.setPreferredSize(new Dimension(200, 40));
+        viewDailyIntakeBtn.addActionListener(e -> {
+            int userId = Session.getCurrentUserId();
+            if (userId > 0) {
+                new DailyNutrientIntakeFrame(userId).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "User session invalid!", "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -64,7 +75,9 @@ public class Dashboard extends JFrame {
 
         centerPanel.add(logMealBtn);
         centerPanel.add(viewLoggedMealsBtn);
-        centerPanel.add(addNutritionGoalBtn);  // add new button here
+        centerPanel.add(addNutritionGoalBtn);
+        centerPanel.add(viewDailyIntakeBtn);  // ✅ added here
+
         add(centerPanel, BorderLayout.CENTER);
 
         homeBtn.addActionListener(e -> {

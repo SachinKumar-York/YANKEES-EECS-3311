@@ -205,7 +205,50 @@ public class FoodDAO {
         }
         return ingredients;
     }
+    
+    public Map<String, Double> getAverageDailyNutrientIntake(int userId, Date startDate, Date endDate) {
+        Map<String, Double> nutrientSums = new HashMap<>();
+
+        String sql =
+        	    "SELECT nn.NutrientSymbol, " +
+        	    "       SUM((IFNULL(na.NutrientValue, 0) / 100) * mi.Qty_grams) AS totalAmount " +
+        	    "FROM usermeal um " +
+        	    "JOIN meal m ON um.MealID = m.MealID " +
+        	    "JOIN mealingredient mi ON m.MealID = mi.MealID " +
+        	    "JOIN nutrientamount na ON mi.FoodID = na.FoodID " +
+        	    "JOIN nutrientname nn ON na.NutrientNameID = nn.NutrientNameID " +
+        	    "WHERE um.user_id = ? AND m.MealDate BETWEEN ? AND ? " +
+        	    "GROUP BY nn.NutrientSymbol";
 
 
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userId);
+            stmt.setDate(2, new java.sql.Date(startDate.getTime()));
+            stmt.setDate(3, new java.sql.Date(endDate.getTime()));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String nutrient = rs.getString("NutrientSymbol");
+                    double totalAmount = rs.getDouble("totalAmount");
+                    nutrientSums.put(nutrient, totalAmount);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // ✅ Calculate inclusive number of days inline
+        long numDays = ((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (numDays <= 0) numDays = 1; // fallback for same-day or edge cases
+
+        // ✅ Divide totals to get average per day
+        for (Map.Entry<String, Double> entry : nutrientSums.entrySet()) {
+            nutrientSums.put(entry.getKey(), entry.getValue() / numDays);
+        }
+
+        return nutrientSums;
+    }
 
 }
