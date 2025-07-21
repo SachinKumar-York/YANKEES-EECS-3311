@@ -172,7 +172,7 @@ public class AddNutritionGoalFrame extends JFrame {
                         "No suitable food swaps found for the given goals.",
                         "No Suggestions", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal);
+                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal, userId);
                 suggestionsFrame.setVisible(true);
             }
 

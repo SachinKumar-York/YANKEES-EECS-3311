@@ -17,7 +17,7 @@ public class SwapComparisonView extends JFrame {
     private final MealIngredient swappedIngredient;
 
     public SwapComparisonView(Meal originalMeal, Meal swappedMeal,
-                             MealIngredient originalIngredient, MealIngredient swappedIngredient) {
+                             MealIngredient originalIngredient, MealIngredient swappedIngredient, int userId) {
         super("Meal Swap Comparison");
         this.originalMeal = originalMeal;
         this.swappedMeal = swappedMeal;
@@ -29,7 +29,7 @@ public class SwapComparisonView extends JFrame {
         setLayout(new BorderLayout(10, 10));
 
         setupMealPanels();
-        setupIngredientComparisonPanel();
+        setupIngredientComparisonPanel(userId);
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
@@ -95,7 +95,7 @@ public class SwapComparisonView extends JFrame {
         add(mealPanel, BorderLayout.NORTH);
     }
 
-    private void setupIngredientComparisonPanel() {
+    private void setupIngredientComparisonPanel(int userId) {
         JPanel nutrientImpactPanel = new JPanel(new BorderLayout(10, 10));
         nutrientImpactPanel.setBorder(BorderFactory.createTitledBorder("Nutrient Impact Comparison"));
 
@@ -118,7 +118,7 @@ public class SwapComparisonView extends JFrame {
         JButton tryAnotherSwapButton = new JButton("Try Another Swap");
 
         applySwapButton.addActionListener(e -> {
-            new SwapOptionsView(originalMeal, swappedMeal, originalIngredient, swappedIngredient).setVisible(true);
+            new SwapOptionsView(originalMeal, swappedMeal, originalIngredient, swappedIngredient, userId).setVisible(true);
         });
 
        

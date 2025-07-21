@@ -2,6 +2,7 @@ package statsVisualiser.gui;
 
 import Models.Meal;
 import Models.MealUtils;
+import DAO.FoodDAO;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -13,17 +14,27 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SwapVisualizationView extends JFrame {
-    private final Meal originalMeal;
+    private final List<Meal> originalMeals;
     private final List<Meal> swappedMeals;
+    private final List<Integer> mealIds; // List of MealIDs corresponding to meals
+    private final Map<Integer, String> mealIdToNameMap;
+    private final FoodDAO foodDAO;
 
-    public SwapVisualizationView(Meal originalMeal, List<Meal> swappedMeals) {
+    public SwapVisualizationView(List<Meal> originalMeals, List<Meal> swappedMeals, List<Integer> mealIds, int userId) {
         super("Nutrient Change Visualization");
-        this.originalMeal = originalMeal;
+        this.originalMeals = originalMeals;
         this.swappedMeals = swappedMeals;
+        this.mealIds = mealIds;
+        this.foodDAO = new FoodDAO();
+        this.mealIdToNameMap = buildMealNameMap(userId);
 
         setSize(1000, 750);
         setLayout(new BorderLayout());
@@ -38,11 +49,34 @@ public class SwapVisualizationView extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     }
 
+    private Map<Integer, String> buildMealNameMap(int userId) {
+        Map<Integer, String> mealNameMap = new HashMap<>();
+        List<String> loggedMeals = foodDAO.getLoggedMealsWithCaloriesForUser(userId);
+        Pattern pattern = Pattern.compile("<span style='display:none'>([0-9]+)</span>.*?<b>(.*?)</b>");
+
+        for (String mealStr : loggedMeals) {
+            System.out.println("Processing meal string: " + mealStr); // Debug log
+            Matcher matcher = pattern.matcher(mealStr);
+            if (matcher.find()) {
+                System.out.println("Matched meal: " + mealStr); // Debug log
+                int mealId = Integer.parseInt(matcher.group(1));
+                String mealName = matcher.group(2);
+                mealNameMap.put(mealId, mealName);
+            } else {
+                System.out.println("Failed to match: " + mealStr); // Debug log
+            }
+        }
+        System.out.println("Final mealIdToNameMap: " + mealNameMap); // Debug log
+        return mealNameMap;
+    }
+
     private JPanel createPerMealPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultListModel<String> listModel = new DefaultListModel<>();
         for (int i = 0; i < swappedMeals.size(); i++) {
-            listModel.addElement("Meal " + (i + 1));
+            int mealId = mealIds.get(i);
+            String mealName = mealIdToNameMap.getOrDefault(mealId, "Unknown Meal");
+            listModel.addElement(mealName);
         }
 
         JList<String> mealList = new JList<>(listModel);
@@ -55,8 +89,9 @@ public class SwapVisualizationView extends JFrame {
             public void mouseClicked(MouseEvent evt) {
                 if (evt.getClickCount() == 2) {
                     int index = mealList.locationToIndex(evt.getPoint());
+                    Meal original = originalMeals.get(index);
                     Meal swapped = swappedMeals.get(index);
-                    showMealComparisonChart(originalMeal, swapped);
+                    showMealComparisonChart(original, swapped);
                 }
             }
         });
@@ -98,9 +133,9 @@ public class SwapVisualizationView extends JFrame {
         float kcalOrig = 0, protOrig = 0, fatOrig = 0, carbOrig = 0, tdfOrig = 0;
         float kcalSwap = 0, protSwap = 0, fatSwap = 0, carbSwap = 0, tdfSwap = 0;
 
-        for (Meal swapped : swappedMeals) {
-            Map<String, Float> orig = MealUtils.calculateMealNutrients(originalMeal);
-            Map<String, Float> swap = MealUtils.calculateMealNutrients(swapped);
+        for (int i = 0; i < swappedMeals.size(); i++) {
+            Map<String, Float> orig = MealUtils.calculateMealNutrients(originalMeals.get(i));
+            Map<String, Float> swap = MealUtils.calculateMealNutrients(swappedMeals.get(i));
 
             kcalOrig += orig.getOrDefault("KCAL", 0f);
             protOrig += orig.getOrDefault("PROT", 0f);

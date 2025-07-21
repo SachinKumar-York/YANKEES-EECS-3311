@@ -18,7 +18,7 @@ public class SwapSuggestionsFrame extends JFrame {
     private final List<SwapSuggestion> suggestions;
     private final Meal originalMeal;
 
-    public SwapSuggestionsFrame(List<SwapSuggestion> suggestions, Meal originalMeal) {
+    public SwapSuggestionsFrame(List<SwapSuggestion> suggestions, Meal originalMeal, int userId) {
         this.suggestions = suggestions;
         this.originalMeal = originalMeal;
 
@@ -60,14 +60,14 @@ public class SwapSuggestionsFrame extends JFrame {
                 if (e.getClickCount() == 2) {
                     int index = suggestionList.locationToIndex(e.getPoint());
                     if (index >= 0) {
-                        openComparisonView(index);
+                        openComparisonView(index, userId);
                     }
                 }
             }
         });
     }
 
-    private void openComparisonView(int index) {
+    private void openComparisonView(int index, int userId) {
         if (originalMeal == null || originalMeal.getItems() == null) {
             JOptionPane.showMessageDialog(this, "Original meal or its ingredients are not available.");
             return;
@@ -96,6 +96,6 @@ public class SwapSuggestionsFrame extends JFrame {
         Meal swappedMeal = MealUtils.buildSwappedMeal(originalMeal, suggestion);
 
         // Open the comparison view window
-        new SwapComparisonView(originalMeal, swappedMeal, originalIngredient, swappedIngredient);
+        new SwapComparisonView(originalMeal, swappedMeal, originalIngredient, swappedIngredient, userId);
     }
 }

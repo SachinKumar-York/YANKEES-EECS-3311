@@ -18,16 +18,18 @@ public class SwapOptionsView extends JFrame {
     private final Meal swappedMeal;
     private final MealIngredient originalIngredient;
     private final MealIngredient swappedIngredient;
+    private final int userId;
     private final SwapInvoker invoker;
 
     public SwapOptionsView(Meal originalMeal, Meal swappedMeal, MealIngredient originalIngredient,
-                          MealIngredient swappedIngredient) {
+                          MealIngredient swappedIngredient, int userId) {
         super("Swap Options");
         this.mealService = new MealService();
         this.originalMeal = originalMeal;
         this.swappedMeal = swappedMeal;
         this.originalIngredient = originalIngredient;
         this.swappedIngredient = swappedIngredient;
+        this.userId = userId;
         this.invoker = new SwapInvoker();
 
         setSize(400, 250);
@@ -40,7 +42,7 @@ public class SwapOptionsView extends JFrame {
         JButton dateRangeButton = new JButton("Apply Swap to Date Range");
 
         allMealsButton.addActionListener(e -> {
-            SwapCommand cmd = new ApplySwapToAllMeals(mealService, originalMeal, swappedMeal, originalIngredient, swappedIngredient);
+            SwapCommand cmd = new ApplySwapToAllMeals(mealService, originalMeal, swappedMeal, originalIngredient, swappedIngredient, userId);
             invoker.setCommand(cmd);
             invoker.run();
         });
@@ -53,7 +55,7 @@ public class SwapOptionsView extends JFrame {
                     JOptionPane.showMessageDialog(this, "Start date must be before end date.", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                SwapCommand cmd = new ApplySwapToDateRange(mealService, originalMeal, swappedMeal, originalIngredient, swappedIngredient, startDate, endDate);
+                SwapCommand cmd = new ApplySwapToDateRange(mealService, originalMeal, swappedMeal, originalIngredient, swappedIngredient, startDate, endDate, userId);
                 invoker.setCommand(cmd);
                 invoker.run();
             } catch (Exception ex) {
