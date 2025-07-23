@@ -31,9 +31,9 @@ public class MealLogFrame extends JFrame {
         this.userId = userId;
 
         setTitle("Log a New Meal");
-        setSize(650, 550);
+        setSize(1200, 800);  // Increased size here
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15));
         getContentPane().setBackground(Color.WHITE);
 
         // Meal Validation Strategies
@@ -41,38 +41,92 @@ public class MealLogFrame extends JFrame {
         validationContext.addValidator(new SingleMealPerDayValidator(foodDAO));
 
         // Title label
-        JLabel header = new JLabel(" Log Your Meal", SwingConstants.CENTER);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        header.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        JLabel header = new JLabel("Log Your Meal", SwingConstants.CENTER);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        header.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         add(header, BorderLayout.NORTH);
 
         // Meal Info Panel (Name, Type, Date)
-        JPanel mealDetails = new JPanel(new GridLayout(3, 2, 10, 10));
-        mealDetails.setBorder(BorderFactory.createTitledBorder("Meal Details"));
-        mealNameField = new JTextField();
+        JPanel mealDetails = new JPanel(new GridBagLayout());
+        mealDetails.setBackground(Color.WHITE);
+        mealDetails.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 255), 2),
+            "Meal Details",
+            0,
+            0,
+            new Font("Segoe UI", Font.BOLD, 16),
+            new Color(50, 50, 150)
+        ));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 15, 10, 15);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JLabel mealNameLabel = new JLabel("Meal Name:");
+        mealNameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        mealNameField = new JTextField(20);
+        mealNameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        JLabel mealTypeLabel = new JLabel("Meal Type:");
+        mealTypeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         mealTypeBox = new JComboBox<>(new String[]{"breakfast", "lunch", "snack", "dinner"});
+        mealTypeBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        JLabel dateLabel = new JLabel("Meal Date:");
+        dateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         datePicker = new JSpinner(new SpinnerDateModel());
         datePicker.setEditor(new JSpinner.DateEditor(datePicker, "yyyy-MM-dd"));
+        datePicker.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        mealDetails.add(new JLabel("Meal Name:"));
-        mealDetails.add(mealNameField);
-        mealDetails.add(new JLabel("Meal Type:"));
-        mealDetails.add(mealTypeBox);
-        mealDetails.add(new JLabel("Meal Date:"));
-        mealDetails.add(datePicker);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mealDetails.add(mealNameLabel, gbc);
+        gbc.gridx = 1;
+        mealDetails.add(mealNameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        mealDetails.add(mealTypeLabel, gbc);
+        gbc.gridx = 1;
+        mealDetails.add(mealTypeBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        mealDetails.add(dateLabel, gbc);
+        gbc.gridx = 1;
+        mealDetails.add(datePicker, gbc);
+
         add(mealDetails, BorderLayout.WEST);
 
         // Ingredient Input and List Panel
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
-        centerPanel.setBorder(BorderFactory.createTitledBorder("Meal Ingredients"));
+        centerPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 255), 2),
+            "Meal Ingredients",
+            0,
+            0,
+            new Font("Segoe UI", Font.BOLD, 16),
+            new Color(50, 50, 150)
+        ));
+        centerPanel.setBackground(Color.WHITE);
 
         // Ingredient input panel
-        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        inputPanel.setBackground(Color.WHITE);
         allFoods = foodDAO.getAllFoods();
         foodCombo = new JComboBox<>(allFoods.toArray(new Food[0]));
         foodCombo.setEditable(true);
-        qtyField = new JTextField(5);
+        foodCombo.setPreferredSize(new Dimension(250, 28));
+        foodCombo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        qtyField = new JTextField(6);
+        qtyField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
         addBtn = new JButton("Add");
+        addBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        addBtn.setBackground(new Color(60, 120, 215));
+        addBtn.setForeground(Color.WHITE);
+        addBtn.setFocusPainted(false);
 
         inputPanel.add(new JLabel("Ingredient:"));
         inputPanel.add(foodCombo);
@@ -83,10 +137,12 @@ public class MealLogFrame extends JFrame {
         // Ingredient list panel
         ingredientListModel = new DefaultListModel<>();
         ingredientJList = new JList<>(ingredientListModel);
-        ingredientJList.setBackground(new Color(245, 250, 255));
+        ingredientJList.setBackground(new Color(240, 245, 255));
         ingredientJList.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        ingredientJList.setFixedCellHeight(25);
         JScrollPane scrollPane = new JScrollPane(ingredientJList);
-        scrollPane.setPreferredSize(new Dimension(300, 200));
+        scrollPane.setPreferredSize(new Dimension(350, 250));
+        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(180, 180, 255)));
 
         centerPanel.add(inputPanel, BorderLayout.NORTH);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
@@ -94,7 +150,13 @@ public class MealLogFrame extends JFrame {
 
         // Log meal button
         logMealBtn = new JButton("Log Meal");
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        logMealBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        logMealBtn.setBackground(new Color(0, 100, 0));
+        logMealBtn.setForeground(Color.WHITE);
+        logMealBtn.setFocusPainted(false);
+
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(Color.WHITE);
         bottomPanel.add(logMealBtn);
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -158,4 +220,3 @@ public class MealLogFrame extends JFrame {
         });
     }
 }
-

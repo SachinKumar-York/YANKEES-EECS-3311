@@ -61,7 +61,6 @@ public class Dashboard extends JFrame {
             }
         });
 
-        // ✅ New button: View Daily Nutrient Intake
         JButton viewDailyIntakeBtn = new JButton("View Daily Nutrient Intake");
         viewDailyIntakeBtn.setPreferredSize(new Dimension(200, 40));
         viewDailyIntakeBtn.addActionListener(e -> {

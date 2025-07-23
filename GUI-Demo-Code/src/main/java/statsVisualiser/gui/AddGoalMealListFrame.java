@@ -17,7 +17,6 @@ public class AddGoalMealListFrame extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // ✅ Use reusable MealSelectionPanel with different double-click behavior
         MealSelectionPanel mealSelectionPanel = new MealSelectionPanel(userId, mealId -> {
             // Double click on a meal → open AddNutritionGoalFrame
             new AddNutritionGoalFrame(userId, mealId).setVisible(true);

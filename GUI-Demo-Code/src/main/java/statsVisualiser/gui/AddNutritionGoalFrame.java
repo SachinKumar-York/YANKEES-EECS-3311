@@ -53,7 +53,6 @@ public class AddNutritionGoalFrame extends JFrame {
         fullContainer.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         add(fullContainer, BorderLayout.CENTER);
 
-        // 🟨 Display nutrient breakdown
         JPanel nutrientBreakdownPanel = new JPanel();
         nutrientBreakdownPanel.setLayout(new BoxLayout(nutrientBreakdownPanel, BoxLayout.Y_AXIS));
 
@@ -78,13 +77,13 @@ public class AddNutritionGoalFrame extends JFrame {
         fullContainer.add(nutrientBreakdownPanel);
         fullContainer.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // 🟦 Title
+     
         JLabel titleLabel = new JLabel("Set Your Nutrition Goal", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
         fullContainer.add(titleLabel);
         fullContainer.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // 🟩 Goal input
+ 
         JPanel goalContainer = new JPanel();
         goalContainer.setLayout(new BoxLayout(goalContainer, BoxLayout.Y_AXIS));
 
@@ -126,7 +125,7 @@ public class AddNutritionGoalFrame extends JFrame {
 
         fullContainer.add(goalContainer);
 
-        // 🟫 Bottom button panel
+    
         JButton suggestButton = new JButton("Get Suggested Swaps");
         suggestButton.addActionListener(e -> handleGetSuggestedSwaps());
 

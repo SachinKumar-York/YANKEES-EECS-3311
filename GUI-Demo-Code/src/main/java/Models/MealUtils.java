@@ -12,19 +12,6 @@ public class MealUtils {
      * Build a new Meal by replacing one ingredient (original food) with a suggested food
      * while keeping the quantity the same.
      */
-//    public static Meal buildSwappedMeal(Meal originalMeal, SwapSuggestion suggestion) {
-//        if (originalMeal == null || suggestion == null) return null;
-//
-//        List<MealIngredient> newIngredients = new ArrayList<>();
-//        for (MealIngredient mi : originalMeal.getItems()) {
-//            if (mi.getFood().equals(suggestion.getOriginal())) {
-//                newIngredients.add(new MealIngredient(suggestion.getSuggested(), mi.getQuantity()));
-//            } else {
-//                newIngredients.add(mi);
-//            }
-//        }
-//        return new Meal(newIngredients);
-//    }
     
     public static Meal buildSwappedMeal(Meal meal, SwapSuggestion suggestion) {
         List<MealIngredient> newItems = new ArrayList<>();

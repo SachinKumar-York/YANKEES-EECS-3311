@@ -24,7 +24,6 @@ public class SwapEngine {
 
         System.out.println("Starting swap generation for meal with " + items.size() + " ingredients.");
 
-        // ✅ Step 1: Calculate original total meal nutrients
         Map<String, Float> originalMealTotals = computeMealNutrients(items);
         System.out.println("Original full meal nutrients:");
         printNutrients(originalMealTotals);
@@ -50,10 +49,8 @@ public class SwapEngine {
                     }
                 }
 
-                // ✅ Step 2: Compute new total nutrients for swapped meal
                 Map<String, Float> newMealTotals = computeMealNutrients(modifiedMeal);
 
-                // ✅ Step 3: Check non-goal nutrient deviation from original totals
                 boolean withinLimits = true;
                 for (String symbol : DISPLAY_NUTRIENT_MAP.keySet()) {
                     if (goalNutrients.contains(symbol)) continue;
@@ -75,7 +72,6 @@ public class SwapEngine {
                     }
                 }
 
-                // ✅ Step 4: Check if swap improves or maintains goal nutrient values
                 if (withinLimits && goalComponent.isGoalMet(originalMealTotals, newMealTotals)) {
                     String justification = "Swapping keeps full meal nutrients within 10% and meets goal.";
                     System.out.println("    --> Valid meal-level swap: " + item.getFood().getFoodDescription() +
@@ -93,7 +89,6 @@ public class SwapEngine {
         return suggestions;
     }
 
-    // ✅ Utility: Sum total nutrients for a list of ingredients
     private Map<String, Float> computeMealNutrients(List<MealIngredient> ingredients) {
         Map<String, Float> totals = new HashMap<>();
 
@@ -107,7 +102,6 @@ public class SwapEngine {
         return totals;
     }
 
-    // ✅ Utility: Print nutrient map with readable names
     private void printNutrients(Map<String, Float> nutrients) {
         for (Map.Entry<String, Float> entry : nutrients.entrySet()) {
             if (DISPLAY_NUTRIENT_MAP.containsKey(entry.getKey())) {

@@ -19,7 +19,6 @@ public class ViewMealsFrame extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // ✅ Reuse MealSelectionPanel with double-click handler for pie chart
         MealSelectionPanel mealSelectionPanel = new MealSelectionPanel(userId, mealId -> {
             if (Session.isLoggedIn()) {
                 int currentUserId = Session.getCurrentUserId();

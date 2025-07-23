@@ -17,7 +17,6 @@ public class NutrientPieChartFrame extends JFrame {
     private final Date endDate;
     private final Map<String, Double> rawDailyAverages;
 
-    // ✅ Key nutrients to show in pie
     private static final Set<String> KEY_NUTRIENTS = new HashSet<>(Arrays.asList(
         "PROTEIN", "CARBOHYDRATE, TOTAL (BY DIFFERENCE)", "FAT (TOTAL LIPIDS)", "FIBRE, TOTAL DIETARY", "ENERGY (KILOCALORIES)", "SUCROSE"
     ));

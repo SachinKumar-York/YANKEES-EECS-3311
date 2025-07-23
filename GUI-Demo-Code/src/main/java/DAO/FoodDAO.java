@@ -322,7 +322,6 @@ public class FoodDAO {
             e.printStackTrace();
         }
 
-        // Normalize to percentage
         double total = rawGrams.values().stream().mapToDouble(Double::doubleValue).sum();
         Map<String, Double> percentMap = new LinkedHashMap<>();
         for (Map.Entry<String, Double> entry : rawGrams.entrySet()) {
