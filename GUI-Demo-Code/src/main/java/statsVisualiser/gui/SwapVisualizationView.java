@@ -239,54 +239,53 @@ public class SwapVisualizationView extends JFrame {
     private JPanel createCFGComparisonPanel() {
         JPanel panel = new JPanel(new GridLayout(1, 2));
 
-        // Calculate cumulative CFG breakdown for original and swapped meals
-        Map<String, Double> origCFGBreakdown = new HashMap<>();
-        Map<String, Double> swapCFGBreakdown = new HashMap<>();
-        origCFGBreakdown.put("Vegetables & Fruits", 0.0);
-        origCFGBreakdown.put("Whole Grains", 0.0);
-        origCFGBreakdown.put("Protein Foods", 0.0);
-        swapCFGBreakdown.put("Vegetables & Fruits", 0.0);
-        swapCFGBreakdown.put("Whole Grains", 0.0);
-        swapCFGBreakdown.put("Protein Foods", 0.0);
+        Map<String, Double> origCFGTotals = new HashMap<>();
+        Map<String, Double> swapCFGTotals = new HashMap<>();
+        origCFGTotals.put("Vegetables & Fruits", 0.0);
+        origCFGTotals.put("Whole Grains", 0.0);
+        origCFGTotals.put("Protein Foods", 0.0);
+        swapCFGTotals.put("Vegetables & Fruits", 0.0);
+        swapCFGTotals.put("Whole Grains", 0.0);
+        swapCFGTotals.put("Protein Foods", 0.0);
 
-        // Aggregate CFG percentages across all meals
-        for (int i = 0; i < originalMeals.size(); i++) {
-            Map<String, Double> origMealCFG = foodDAO.getCFGBreakdownForMeal(originalMeals.get(i));
-            Map<String, Double> swapMealCFG = foodDAO.getCFGBreakdownForMeal(swappedMeals.get(i));
-            
-            for (String group : origCFGBreakdown.keySet()) {
-                origCFGBreakdown.merge(group, origMealCFG.getOrDefault(group, 0.0), Double::sum);
-                swapCFGBreakdown.merge(group, swapMealCFG.getOrDefault(group, 0.0), Double::sum);
+        // Sum raw grams per CFG group across all original meals
+        for (Meal meal : originalMeals) {
+            Map<String, Double> raw = foodDAO.getCFGRawTotalsForMeal(meal);
+            for (String group : origCFGTotals.keySet()) {
+                origCFGTotals.merge(group, raw.getOrDefault(group, 0.0), Double::sum);
             }
         }
 
-        // Normalize to percentages (divide by number of meals to get average contribution)
-        int totalMeals = originalMeals.size();
-        if (totalMeals > 0) {
-            for (String group : origCFGBreakdown.keySet()) {
-                origCFGBreakdown.put(group, origCFGBreakdown.get(group) / totalMeals);
-                swapCFGBreakdown.put(group, swapCFGBreakdown.get(group) / totalMeals);
+        // Sum raw grams per CFG group across all swapped meals
+        for (Meal meal : swappedMeals) {
+            Map<String, Double> raw = foodDAO.getCFGRawTotalsForMeal(meal);
+            for (String group : swapCFGTotals.keySet()) {
+                swapCFGTotals.merge(group, raw.getOrDefault(group, 0.0), Double::sum);
             }
         }
 
-        // Create pie chart datasets
+        // Calculate total grams to convert to percentages for pie charts
+        double origTotal = origCFGTotals.values().stream().mapToDouble(Double::doubleValue).sum();
+        double swapTotal = swapCFGTotals.values().stream().mapToDouble(Double::doubleValue).sum();
+
         DefaultPieDataset origDataset = new DefaultPieDataset();
         DefaultPieDataset swapDataset = new DefaultPieDataset();
 
-        for (String group : origCFGBreakdown.keySet()) {
-            double origValue = origCFGBreakdown.get(group);
-            double swapValue = swapCFGBreakdown.get(group);
-            if (origValue > 0) {
-                origDataset.setValue(group, origValue);
+        for (String group : origCFGTotals.keySet()) {
+            double val = origCFGTotals.get(group);
+            if (val > 0) {
+                origDataset.setValue(group, (val / origTotal) * 100);
             }
-            if (swapValue > 0) {
-                swapDataset.setValue(group, swapValue);
+        }
+        for (String group : swapCFGTotals.keySet()) {
+            double val = swapCFGTotals.get(group);
+            if (val > 0) {
+                swapDataset.setValue(group, (val / swapTotal) * 100);
             }
         }
 
-        // Create pie charts
         JFreeChart origChart = ChartFactory.createPieChart(
-                "Original Meals CFG Breakdown",
+                "Original Meals CFG Breakdown (%)",
                 origDataset,
                 true,
                 true,
@@ -294,17 +293,17 @@ public class SwapVisualizationView extends JFrame {
         );
 
         JFreeChart swapChart = ChartFactory.createPieChart(
-                "Swapped Meals CFG Breakdown",
+                "Swapped Meals CFG Breakdown (%)",
                 swapDataset,
                 true,
                 true,
                 false
         );
 
-        // Add charts to panel
         panel.add(new ChartPanel(origChart));
         panel.add(new ChartPanel(swapChart));
 
         return panel;
     }
+
 }

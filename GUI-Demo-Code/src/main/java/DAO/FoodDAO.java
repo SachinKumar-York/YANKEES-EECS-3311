@@ -332,61 +332,6 @@ public class FoodDAO {
         return percentMap;
     }
 
-    
-    public Map<String, Double> getCFGBreakdownForMeal(Meal meal) {
-        Map<String, Double> breakdown = new HashMap<>();
-        Map<String, Double> cfgGroupTotals = new HashMap<>();
-
-        // CFG groups
-        cfgGroupTotals.put("Vegetables & Fruits", 0.0);
-        cfgGroupTotals.put("Whole Grains", 0.0);
-        cfgGroupTotals.put("Protein Foods", 0.0);
-
-        // Get meal ingredients from Meal object
-        List<MealIngredient> ingredients = meal.getItems(); // Assuming Meal has getIngredients() method
-        Map<String, Double> tempGroupQuantities = new HashMap<>();
-        double totalQuantity = 0.0;
-
-        // Query to get food group for each ingredient's FoodID
-        String sql = "SELECT fg.FoodGroupID " +
-                     "FROM foodname fn " +
-                     "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
-                     "WHERE fn.FoodID = ?";
-
-        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            for (MealIngredient ingredient : ingredients) {
-                long foodId = ingredient.getFood().getFoodId();
-                double qty = ingredient.getQuantity();
-
-                stmt.setLong(1, foodId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        int groupId = rs.getInt("FoodGroupID");
-                        String cfgCategory = mapToCFG(groupId);
-                        if (cfgCategory != null) {
-                            tempGroupQuantities.merge(cfgCategory, qty, Double::sum);
-                            totalQuantity += qty;
-                        }
-                    }
-                }
-            }
-
-            // Calculate percentages
-            for (String group : cfgGroupTotals.keySet()) {
-                double gQty = tempGroupQuantities.getOrDefault(group, 0.0);
-                double percent = (totalQuantity > 0) ? (gQty / totalQuantity) * 100.0 : 0.0;
-                breakdown.put(group, percent);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return breakdown;
-    }
-
     // Helper method: Maps food group ID to CFG category
     private String mapToCFG(int foodGroupId) {
         switch (foodGroupId) {
@@ -394,6 +339,7 @@ public class FoodDAO {
             case 11:
                 return "Vegetables & Fruits";  // Fruits and Vegetables
             case 8:
+            case 18:
             case 20:
                 return "Whole Grains";         // Cereals, Grains
             case 1:
@@ -410,5 +356,40 @@ public class FoodDAO {
                 return null; // Not mapped to CFG
         }
     }
+    
+    public Map<String, Double> getCFGRawTotalsForMeal(Meal meal) {
+        Map<String, Double> cfgTotals = new HashMap<>();
+        cfgTotals.put("Vegetables & Fruits", 0.0);
+        cfgTotals.put("Whole Grains", 0.0);
+        cfgTotals.put("Protein Foods", 0.0);
+
+        List<MealIngredient> ingredients = meal.getItems();
+        String sql = "SELECT fg.FoodGroupID FROM foodname fn JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID WHERE fn.FoodID = ?";
+
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            for (MealIngredient ingredient : ingredients) {
+                long foodId = ingredient.getFood().getFoodId();
+                double qty = ingredient.getQuantity();
+
+                stmt.setLong(1, foodId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        int groupId = rs.getInt("FoodGroupID");
+                        String cfgCategory = mapToCFG(groupId);
+                        if (cfgCategory != null) {
+                            cfgTotals.merge(cfgCategory, qty, Double::sum);
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return cfgTotals;
+    }
+
 
 }
