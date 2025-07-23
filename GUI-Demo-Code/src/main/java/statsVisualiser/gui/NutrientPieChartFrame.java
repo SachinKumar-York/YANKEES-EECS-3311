@@ -48,7 +48,7 @@ public class NutrientPieChartFrame extends JFrame {
 
         // South: Comparison button
         JButton compareBtn = new JButton("Compare with Recommended Daily Portions");
-        compareBtn.addActionListener(e -> new RecommendedComparisonFrame(userId, rawDailyAverages).setVisible(true));
+        compareBtn.addActionListener(e -> new RecommendedComparisonFrame(userId, rawDailyAverages, startDate, endDate).setVisible(true));
 
         add(centerPanel, BorderLayout.CENTER);
         add(compareBtn, BorderLayout.SOUTH);

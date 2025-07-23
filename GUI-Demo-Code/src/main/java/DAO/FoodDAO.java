@@ -1,6 +1,7 @@
 package DAO;
 
 import Models.Food;
+import Models.Meal;
 import Models.MealIngredient;
 import DAO.DBConnector;
 
@@ -279,19 +280,18 @@ public class FoodDAO {
         return nutrientSums;
     }
     
-    public Map<String, Double> getUserFoodGroupPercentages(int userId) {
+    public Map<String, Double> getUserFoodGroupPercentages(int userId, Date startDate, Date endDate) {
         Map<String, Double> rawGrams = new HashMap<>();
 
         String sql = 
-        	    "SELECT fg.FoodGroupID, SUM(mi.Qty_grams) as totalGrams " +
-        	    "FROM usermeal um " +
-        	    "JOIN meal m ON um.MealID = m.MealID " +
-        	    "JOIN mealingredient mi ON m.MealID = mi.MealID " +
-        	    "JOIN foodname fn ON mi.FoodID = fn.FoodID " +
-        	    "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
-        	    "WHERE um.user_id = ? " +
-        	    "GROUP BY fg.FoodGroupID";
-
+            "SELECT fg.FoodGroupID, SUM(mi.Qty_grams) as totalGrams " +
+            "FROM usermeal um " +
+            "JOIN meal m ON um.MealID = m.MealID " +
+            "JOIN mealingredient mi ON m.MealID = mi.MealID " +
+            "JOIN foodname fn ON mi.FoodID = fn.FoodID " +
+            "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
+            "WHERE um.user_id = ? AND m.MealDate BETWEEN ? AND ? " +
+            "GROUP BY fg.FoodGroupID";
 
         Map<Integer, String> cfgMap = Map.ofEntries(
             Map.entry(9, "Vegetables & Fruits"), Map.entry(11, "Vegetables & Fruits"),
@@ -305,6 +305,9 @@ public class FoodDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, userId);
+            stmt.setDate(2, new java.sql.Date(startDate.getTime()));
+            stmt.setDate(3, new java.sql.Date(endDate.getTime()));
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     int groupId = rs.getInt("FoodGroupID");
@@ -326,10 +329,86 @@ public class FoodDAO {
             percentMap.put(entry.getKey(), (entry.getValue() / total) * 100.0);
         }
 
-
         return percentMap;
     }
 
+    
+    public Map<String, Double> getCFGBreakdownForMeal(Meal meal) {
+        Map<String, Double> breakdown = new HashMap<>();
+        Map<String, Double> cfgGroupTotals = new HashMap<>();
 
+        // CFG groups
+        cfgGroupTotals.put("Vegetables & Fruits", 0.0);
+        cfgGroupTotals.put("Whole Grains", 0.0);
+        cfgGroupTotals.put("Protein Foods", 0.0);
+
+        // Get meal ingredients from Meal object
+        List<MealIngredient> ingredients = meal.getItems(); // Assuming Meal has getIngredients() method
+        Map<String, Double> tempGroupQuantities = new HashMap<>();
+        double totalQuantity = 0.0;
+
+        // Query to get food group for each ingredient's FoodID
+        String sql = "SELECT fg.FoodGroupID " +
+                     "FROM foodname fn " +
+                     "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
+                     "WHERE fn.FoodID = ?";
+
+        try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            for (MealIngredient ingredient : ingredients) {
+                long foodId = ingredient.getFood().getFoodId();
+                double qty = ingredient.getQuantity();
+
+                stmt.setLong(1, foodId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        int groupId = rs.getInt("FoodGroupID");
+                        String cfgCategory = mapToCFG(groupId);
+                        if (cfgCategory != null) {
+                            tempGroupQuantities.merge(cfgCategory, qty, Double::sum);
+                            totalQuantity += qty;
+                        }
+                    }
+                }
+            }
+
+            // Calculate percentages
+            for (String group : cfgGroupTotals.keySet()) {
+                double gQty = tempGroupQuantities.getOrDefault(group, 0.0);
+                double percent = (totalQuantity > 0) ? (gQty / totalQuantity) * 100.0 : 0.0;
+                breakdown.put(group, percent);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return breakdown;
+    }
+
+    // Helper method: Maps food group ID to CFG category
+    private String mapToCFG(int foodGroupId) {
+        switch (foodGroupId) {
+            case 9:
+            case 11:
+                return "Vegetables & Fruits";  // Fruits and Vegetables
+            case 8:
+            case 20:
+                return "Whole Grains";         // Cereals, Grains
+            case 1:
+            case 5:
+            case 7:
+            case 10:
+            case 12:
+            case 13:
+            case 15:
+            case 16:
+            case 17:
+                return "Protein Foods";        // Dairy, Meats, Nuts, Fish, Legumes
+            default:
+                return null; // Not mapped to CFG
+        }
+    }
 
 }

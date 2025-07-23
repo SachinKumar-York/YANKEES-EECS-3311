@@ -24,7 +24,7 @@ public class RecommendedComparisonFrame extends JFrame {
         "SUCROSE"
     ));
 
-    public RecommendedComparisonFrame(int userId, Map<String, Double> userAvg) {
+    public RecommendedComparisonFrame(int userId, Map<String, Double> userAvg, Date startDate, Date endDate) {
         setTitle("Comparison with Recommended Daily Portions");
         setSize(900, 650);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -68,7 +68,7 @@ public class RecommendedComparisonFrame extends JFrame {
         JButton cfgButton = new JButton("Compare with CFG (Canada Food Guide)");
         cfgButton.addActionListener(e -> {
             FoodDAO dao = new FoodDAO();
-            Map<String, Double> userGroupPercentages = dao.getUserFoodGroupPercentages(userId);
+            Map<String, Double> userGroupPercentages = dao.getUserFoodGroupPercentages(userId, startDate, endDate);
             new CFGComparisonFrame(userGroupPercentages).setVisible(true);
         });
 
@@ -91,9 +91,9 @@ public class RecommendedComparisonFrame extends JFrame {
 
         double bmr;
         if (gender.equals("male")) {
-            bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+            bmr = 10 * weight + 6.25 * height * 100 - 5 * age + 5;
         } else {
-            bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+            bmr = 10 * weight + 6.25 * height * 100 - 5 * age - 161;
         }
         double tdee = bmr * activity;
 

@@ -20,11 +20,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.awt.event.ActionListener;
 
 public class SwapVisualizationView extends JFrame {
     private final List<Meal> originalMeals;
     private final List<Meal> swappedMeals;
-    private final List<Integer> mealIds; // List of MealIDs corresponding to meals
+    private final List<Integer> mealIds;
     private final Map<Integer, String> mealIdToNameMap;
     private final FoodDAO foodDAO;
 
@@ -42,8 +43,9 @@ public class SwapVisualizationView extends JFrame {
 
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Per Meal", createPerMealPanel());
-        tabs.addTab("Cumulative", new ChartPanel(createCumulativeChart()));
+        tabs.addTab("Cumulative", createCumulativePanel());
         tabs.addTab("Average", new ChartPanel(createAverageChart()));
+        tabs.addTab("Compare with CFG", createCFGComparisonPanel());
 
         add(tabs, BorderLayout.CENTER);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -55,18 +57,18 @@ public class SwapVisualizationView extends JFrame {
         Pattern pattern = Pattern.compile("<span style='display:none'>([0-9]+)</span>.*?<b>(.*?)</b>");
 
         for (String mealStr : loggedMeals) {
-            System.out.println("Processing meal string: " + mealStr); // Debug log
+            System.out.println("Processing meal string: " + mealStr);
             Matcher matcher = pattern.matcher(mealStr);
             if (matcher.find()) {
-                System.out.println("Matched meal: " + mealStr); // Debug log
+                System.out.println("Matched meal: " + mealStr);
                 int mealId = Integer.parseInt(matcher.group(1));
                 String mealName = matcher.group(2);
                 mealNameMap.put(mealId, mealName);
             } else {
-                System.out.println("Failed to match: " + mealStr); // Debug log
+                System.out.println("Failed to match: " + mealStr);
             }
         }
-        System.out.println("Final mealIdToNameMap: " + mealNameMap); // Debug log
+        System.out.println("Final mealIdToNameMap: " + mealNameMap);
         return mealNameMap;
     }
 
@@ -128,42 +130,85 @@ public class SwapVisualizationView extends JFrame {
         frame.setVisible(true);
     }
 
-    private JFreeChart createCumulativeChart() {
+    private JPanel createCumulativePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JRadioButton barBtn = new JRadioButton("Bar Chart", true);
+        JRadioButton lineBtn = new JRadioButton("Line Chart");
+        ButtonGroup chartTypeGroup = new ButtonGroup();
+        chartTypeGroup.add(barBtn);
+        chartTypeGroup.add(lineBtn);
+
+        JCheckBox kcalBox = new JCheckBox("Calories", true);
+        JCheckBox protBox = new JCheckBox("Protein", true);
+        JCheckBox fatBox = new JCheckBox("Fat", true);
+        JCheckBox carbBox = new JCheckBox("Carbs", true);
+        JCheckBox tdfBox = new JCheckBox("Fibre", true);
+
+        List<JCheckBox> nutrientChecks = List.of(kcalBox, protBox, fatBox, carbBox, tdfBox);
+
+        controlPanel.add(barBtn);
+        controlPanel.add(lineBtn);
+        nutrientChecks.forEach(controlPanel::add);
+
+        panel.add(controlPanel, BorderLayout.NORTH);
+
+        JPanel chartHolder = new JPanel(new BorderLayout());
+        panel.add(chartHolder, BorderLayout.CENTER);
+
+        Runnable updateChart = () -> {
+            List<String> selected = new ArrayList<>();
+            if (kcalBox.isSelected()) selected.add("KCAL");
+            if (protBox.isSelected()) selected.add("PROT");
+            if (fatBox.isSelected()) selected.add("FAT");
+            if (carbBox.isSelected()) selected.add("CARB");
+            if (tdfBox.isSelected()) selected.add("TDF");
+
+            boolean isLine = lineBtn.isSelected();
+            JFreeChart chart = createDynamicCumulativeChart(selected, isLine);
+            chartHolder.removeAll();
+            chartHolder.add(new ChartPanel(chart), BorderLayout.CENTER);
+            chartHolder.revalidate();
+            chartHolder.repaint();
+        };
+
+        ActionListener listener = e -> updateChart.run();
+        barBtn.addActionListener(listener);
+        lineBtn.addActionListener(listener);
+        nutrientChecks.forEach(cb -> cb.addActionListener(listener));
+
+        updateChart.run();
+        return panel;
+    }
+
+    private JFreeChart createDynamicCumulativeChart(List<String> nutrients, boolean useLineChart) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        float kcalOrig = 0, protOrig = 0, fatOrig = 0, carbOrig = 0, tdfOrig = 0;
-        float kcalSwap = 0, protSwap = 0, fatSwap = 0, carbSwap = 0, tdfSwap = 0;
+        Map<String, Float> origTotal = new HashMap<>();
+        Map<String, Float> swapTotal = new HashMap<>();
+
+        for (String n : nutrients) {
+            origTotal.put(n, 0f);
+            swapTotal.put(n, 0f);
+        }
 
         for (int i = 0; i < swappedMeals.size(); i++) {
             Map<String, Float> orig = MealUtils.calculateMealNutrients(originalMeals.get(i));
             Map<String, Float> swap = MealUtils.calculateMealNutrients(swappedMeals.get(i));
-
-            kcalOrig += orig.getOrDefault("KCAL", 0f);
-            protOrig += orig.getOrDefault("PROT", 0f);
-            fatOrig += orig.getOrDefault("FAT", 0f);
-            carbOrig += orig.getOrDefault("CARB", 0f);
-            tdfOrig += orig.getOrDefault("TDF", 0f);
-
-            kcalSwap += swap.getOrDefault("KCAL", 0f);
-            protSwap += swap.getOrDefault("PROT", 0f);
-            fatSwap += swap.getOrDefault("FAT", 0f);
-            carbSwap += swap.getOrDefault("CARB", 0f);
-            tdfSwap += swap.getOrDefault("TDF", 0f);
+            for (String n : nutrients) {
+                origTotal.put(n, origTotal.get(n) + orig.getOrDefault(n, 0f));
+                swapTotal.put(n, swapTotal.get(n) + swap.getOrDefault(n, 0f));
+            }
         }
 
-        dataset.addValue(kcalOrig, "Original", "KCAL");
-        dataset.addValue(protOrig, "Original", "PROT");
-        dataset.addValue(fatOrig, "Original", "FAT");
-        dataset.addValue(carbOrig, "Original", "CARB");
-        dataset.addValue(tdfOrig, "Original", "TDF");
+        for (String n : nutrients) {
+            dataset.addValue(origTotal.get(n), "Original", n);
+            dataset.addValue(swapTotal.get(n), "Swapped", n);
+        }
 
-        dataset.addValue(kcalSwap, "Swapped", "KCAL");
-        dataset.addValue(protSwap, "Swapped", "PROT");
-        dataset.addValue(fatSwap, "Swapped", "FAT");
-        dataset.addValue(carbSwap, "Swapped", "CARB");
-        dataset.addValue(tdfSwap, "Swapped", "TDF");
-
-        return ChartFactory.createBarChart("Cumulative Nutrients Comparison", "Nutrient", "Total",
-                dataset, PlotOrientation.VERTICAL, true, true, false);
+        return useLineChart
+                ? ChartFactory.createLineChart("Cumulative Nutrient Comparison", "Nutrient", "Total", dataset)
+                : ChartFactory.createBarChart("Cumulative Nutrient Comparison", "Nutrient", "Total", dataset);
     }
 
     private JFreeChart createAverageChart() {
@@ -189,5 +234,77 @@ public class SwapVisualizationView extends JFrame {
         }
 
         return ChartFactory.createPieChart("Average Nutrient Distribution (Swapped Meals)", dataset, true, true, false);
+    }
+
+    private JPanel createCFGComparisonPanel() {
+        JPanel panel = new JPanel(new GridLayout(1, 2));
+
+        // Calculate cumulative CFG breakdown for original and swapped meals
+        Map<String, Double> origCFGBreakdown = new HashMap<>();
+        Map<String, Double> swapCFGBreakdown = new HashMap<>();
+        origCFGBreakdown.put("Vegetables & Fruits", 0.0);
+        origCFGBreakdown.put("Whole Grains", 0.0);
+        origCFGBreakdown.put("Protein Foods", 0.0);
+        swapCFGBreakdown.put("Vegetables & Fruits", 0.0);
+        swapCFGBreakdown.put("Whole Grains", 0.0);
+        swapCFGBreakdown.put("Protein Foods", 0.0);
+
+        // Aggregate CFG percentages across all meals
+        for (int i = 0; i < originalMeals.size(); i++) {
+            Map<String, Double> origMealCFG = foodDAO.getCFGBreakdownForMeal(originalMeals.get(i));
+            Map<String, Double> swapMealCFG = foodDAO.getCFGBreakdownForMeal(swappedMeals.get(i));
+            
+            for (String group : origCFGBreakdown.keySet()) {
+                origCFGBreakdown.merge(group, origMealCFG.getOrDefault(group, 0.0), Double::sum);
+                swapCFGBreakdown.merge(group, swapMealCFG.getOrDefault(group, 0.0), Double::sum);
+            }
+        }
+
+        // Normalize to percentages (divide by number of meals to get average contribution)
+        int totalMeals = originalMeals.size();
+        if (totalMeals > 0) {
+            for (String group : origCFGBreakdown.keySet()) {
+                origCFGBreakdown.put(group, origCFGBreakdown.get(group) / totalMeals);
+                swapCFGBreakdown.put(group, swapCFGBreakdown.get(group) / totalMeals);
+            }
+        }
+
+        // Create pie chart datasets
+        DefaultPieDataset origDataset = new DefaultPieDataset();
+        DefaultPieDataset swapDataset = new DefaultPieDataset();
+
+        for (String group : origCFGBreakdown.keySet()) {
+            double origValue = origCFGBreakdown.get(group);
+            double swapValue = swapCFGBreakdown.get(group);
+            if (origValue > 0) {
+                origDataset.setValue(group, origValue);
+            }
+            if (swapValue > 0) {
+                swapDataset.setValue(group, swapValue);
+            }
+        }
+
+        // Create pie charts
+        JFreeChart origChart = ChartFactory.createPieChart(
+                "Original Meals CFG Breakdown",
+                origDataset,
+                true,
+                true,
+                false
+        );
+
+        JFreeChart swapChart = ChartFactory.createPieChart(
+                "Swapped Meals CFG Breakdown",
+                swapDataset,
+                true,
+                true,
+                false
+        );
+
+        // Add charts to panel
+        panel.add(new ChartPanel(origChart));
+        panel.add(new ChartPanel(swapChart));
+
+        return panel;
     }
 }
