@@ -11,24 +11,46 @@ public class Dashboard extends JFrame {
 
     public Dashboard(JFrame home, UserProfile user) {
         this.homeRef = home;
-        setTitle("Dashboard - " + user.getName());
-        setSize(600, 400);
-        setLayout(new BorderLayout());
+        setTitle("NutriSci Dashboard");
+        setSize(800, 500);
+        setLayout(new BorderLayout(10, 10));
 
-        // TOP-RIGHT: User and Return Home 
-        JPanel topBar = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // ========== Header ==========
+        JLabel header = new JLabel("Welcome, " + user.getName(), SwingConstants.CENTER);
+        header.setFont(new Font("SansSerif", Font.BOLD, 22));
+        header.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(header, BorderLayout.NORTH);
 
-        JButton userBtn = new JButton(user.getName());
-        JButton homeBtn = new JButton("Return Home");
+        // ========== Sidebar (Navigation) ==========
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
+        navPanel.setBorder(BorderFactory.createTitledBorder("Navigation"));
+        navPanel.setPreferredSize(new Dimension(250, getHeight()));
 
-        topBar.add(userBtn);
-        topBar.add(homeBtn);
-        add(topBar, BorderLayout.NORTH);
+        JButton logMealBtn = new JButton(" Log Meal ");
+        JButton viewLoggedMealsBtn = new JButton(" View Logged Meals ");
+        JButton addNutritionGoalBtn = new JButton(" Add Nutrition Goal ");
+        JButton viewDailyIntakeBtn = new JButton(" View Daily Nutrient Intake ");
+        JButton homeBtn = new JButton(" Return Home ");
+
+        for (JButton btn : new JButton[]{logMealBtn, viewLoggedMealsBtn, addNutritionGoalBtn, viewDailyIntakeBtn, homeBtn}) {
+            btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            btn.setMaximumSize(new Dimension(220, 40));
+            btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            btn.setFocusable(false);
+            navPanel.add(Box.createVerticalStrut(10));
+            navPanel.add(btn);
+        }
+
+        add(navPanel, BorderLayout.WEST);
 
         JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BorderLayout());
+        JLabel infoLabel = new JLabel("Select an option from the navigation panel.", SwingConstants.CENTER);
+        infoLabel.setFont(new Font("SansSerif", Font.ITALIC, 16));
+        centerPanel.add(infoLabel, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
 
-        JButton logMealBtn = new JButton("Log Meal");
-        logMealBtn.setPreferredSize(new Dimension(120, 40));
         logMealBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
@@ -38,8 +60,6 @@ public class Dashboard extends JFrame {
             }
         });
 
-        JButton viewLoggedMealsBtn = new JButton("View Logged Meals");
-        viewLoggedMealsBtn.setPreferredSize(new Dimension(150, 40));
         viewLoggedMealsBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
@@ -49,9 +69,6 @@ public class Dashboard extends JFrame {
             }
         });
 
-        // New button: Add Nutrition Goal
-        JButton addNutritionGoalBtn = new JButton("Add Nutrition Goal");
-        addNutritionGoalBtn.setPreferredSize(new Dimension(160, 40));
         addNutritionGoalBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
@@ -61,8 +78,6 @@ public class Dashboard extends JFrame {
             }
         });
 
-        JButton viewDailyIntakeBtn = new JButton("View Daily Nutrient Intake");
-        viewDailyIntakeBtn.setPreferredSize(new Dimension(200, 40));
         viewDailyIntakeBtn.addActionListener(e -> {
             int userId = Session.getCurrentUserId();
             if (userId > 0) {
@@ -72,13 +87,6 @@ public class Dashboard extends JFrame {
             }
         });
 
-        centerPanel.add(logMealBtn);
-        centerPanel.add(viewLoggedMealsBtn);
-        centerPanel.add(addNutritionGoalBtn);
-        centerPanel.add(viewDailyIntakeBtn);  // ✅ added here
-
-        add(centerPanel, BorderLayout.CENTER);
-
         homeBtn.addActionListener(e -> {
             homeRef.setVisible(true);
             dispose();
@@ -86,6 +94,7 @@ public class Dashboard extends JFrame {
 
         homeRef.setVisible(false);
         setLocationRelativeTo(homeRef);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
     public static void main(String[] args) {
@@ -94,24 +103,18 @@ public class Dashboard extends JFrame {
         homeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         homeFrame.setVisible(true);
 
-        // Create a dummy user profile (normally retrieved from DB)
         UserProfile dummyUser = new UserProfile(
-            "John Doe",
-            "john@example.com",
-            "Male",
-            new java.util.Date(),
-            1.75f,
-            70f,
-            "Metric"
+                "John Doe",
+                "john@example.com",
+                "Male",
+                new java.util.Date(),
+                1.75f,
+                70f,
+                "Metric"
         );
         dummyUser.setUserId(1);
-
-        // Simulate user session login
         Session.login(dummyUser.getUserId());
 
-        // Launch the Dashboard
-        SwingUtilities.invokeLater(() -> {
-            new Dashboard(homeFrame, dummyUser).setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new Dashboard(homeFrame, dummyUser).setVisible(true));
     }
 }

@@ -17,20 +17,33 @@ public class CreateProfileDialog extends JDialog {
     private final JTextField weightField = new JTextField(15);
     private final JComboBox<String> unitsBox = new JComboBox<>(new String[]{"metric", "imperial"});
 
+    private static final Font DEFAULT_FONT = new Font("Segoe UI", Font.PLAIN, 14);
+    private static final Insets FIELD_INSETS = new Insets(4, 8, 4, 8);
+
     public CreateProfileDialog(JFrame owner, UserProfileDao dao, Runnable onSuccess) {
         super(owner, "Create Profile", true);
-        setLayout(new GridLayout(0, 2, 10, 10));
+        setLayout(new BorderLayout(10, 10));
 
-        add(new JLabel("Name"));    add(nameField);
-        add(new JLabel("Email"));   add(emailField);
-        add(new JLabel("Sex"));     add(sexBox);
-        add(new JLabel("DOB (yyyy-MM-dd)")); add(dobField);
-        add(new JLabel("Height"));  add(heightField);
-        add(new JLabel("Weight"));  add(weightField);
-        add(new JLabel("Units"));   add(unitsBox);
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = FIELD_INSETS;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
 
-        JButton save = new JButton("Save");
-        save.addActionListener(e -> {
+        addRow(formPanel, gbc, "Name", nameField);
+        addRow(formPanel, gbc, "Email", emailField);
+        addRow(formPanel, gbc, "Sex", sexBox);
+        addRow(formPanel, gbc, "DOB (yyyy-MM-dd)", dobField);
+        addRow(formPanel, gbc, "Height", heightField);
+        addRow(formPanel, gbc, "Weight", weightField);
+        addRow(formPanel, gbc, "Units", unitsBox);
+
+        JButton saveBtn = new JButton("Save");
+        saveBtn.setFont(DEFAULT_FONT);
+        saveBtn.setPreferredSize(new Dimension(100, 30));
+        saveBtn.addActionListener(e -> {
             try {
                 UserProfile user = buildProfile();
                 int id = dao.insertUserProfile(user);
@@ -45,9 +58,30 @@ public class CreateProfileDialog extends JDialog {
             }
         });
 
-        add(save);
+        JPanel btnPanel = new JPanel();
+        btnPanel.add(saveBtn);
+
+        add(formPanel, BorderLayout.CENTER);
+        add(btnPanel, BorderLayout.SOUTH);
+
         pack();
+        setResizable(false);
         setLocationRelativeTo(owner);
+    }
+
+    private void addRow(JPanel panel, GridBagConstraints gbc, String label, JComponent field) {
+        JLabel jLabel = new JLabel(label);
+        jLabel.setFont(DEFAULT_FONT);
+        field.setFont(DEFAULT_FONT);
+
+        gbc.gridx = 0;
+        gbc.weightx = 0.2;
+        panel.add(jLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.8;
+        panel.add(field, gbc);
+        gbc.gridy++;
     }
 
     private UserProfile buildProfile() throws ParseException {
@@ -68,8 +102,8 @@ public class CreateProfileDialog extends JDialog {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            UserProfileDao dao = new UserProfileDao(); // Ensure DB connection works
-            JFrame dummyFrame = new JFrame(); // Dummy parent frame
+            UserProfileDao dao = new UserProfileDao();
+            JFrame dummyFrame = new JFrame();
             Runnable onSuccess = () -> System.out.println("Profile created successfully!");
             CreateProfileDialog dialog = new CreateProfileDialog(dummyFrame, dao, onSuccess);
             dialog.setVisible(true);
