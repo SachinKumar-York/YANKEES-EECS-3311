@@ -29,7 +29,7 @@ public class DBConnector {
     private static Connection getMySQLConnection() throws SQLException {
         String url = "jdbc:mysql://localhost:3306/cnf";
         String user = "root";
-        String password = "Sharma@123";
+        String password = "Divyansh_5";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {

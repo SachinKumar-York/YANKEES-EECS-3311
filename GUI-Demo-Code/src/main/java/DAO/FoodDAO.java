@@ -283,7 +283,7 @@ public class FoodDAO {
     public Map<String, Double> getUserFoodGroupPercentages(int userId, Date startDate, Date endDate) {
         Map<String, Double> rawGrams = new HashMap<>();
 
-        String sql = 
+        String sql =
             "SELECT fg.FoodGroupID, SUM(mi.Qty_grams) as totalGrams " +
             "FROM usermeal um " +
             "JOIN meal m ON um.MealID = m.MealID " +
@@ -292,14 +292,6 @@ public class FoodDAO {
             "JOIN foodgroup fg ON fn.FoodGroupID = fg.FoodGroupID " +
             "WHERE um.user_id = ? AND m.MealDate BETWEEN ? AND ? " +
             "GROUP BY fg.FoodGroupID";
-
-        Map<Integer, String> cfgMap = Map.ofEntries(
-            Map.entry(9, "Vegetables & Fruits"), Map.entry(11, "Vegetables & Fruits"),
-            Map.entry(8, "Whole Grains"), Map.entry(18, "Whole Grains"), Map.entry(20, "Whole Grains"),
-            Map.entry(1, "Protein Foods"), Map.entry(5, "Protein Foods"), Map.entry(7, "Protein Foods"),
-            Map.entry(10, "Protein Foods"), Map.entry(12, "Protein Foods"), Map.entry(13, "Protein Foods"),
-            Map.entry(15, "Protein Foods"), Map.entry(16, "Protein Foods"), Map.entry(17, "Protein Foods")
-        );
 
         try (Connection conn = DBConnector.getConnection(DBConnector.DBType.MYSQL);
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -312,7 +304,7 @@ public class FoodDAO {
                 while (rs.next()) {
                     int groupId = rs.getInt("FoodGroupID");
                     double grams = rs.getDouble("totalGrams");
-                    String cfgCategory = cfgMap.get(groupId);
+                    String cfgCategory = mapToCFG(groupId);
                     if (cfgCategory != null) {
                         rawGrams.merge(cfgCategory, grams, Double::sum);
                     }
@@ -334,25 +326,33 @@ public class FoodDAO {
     // Helper method: Maps food group ID to CFG category
     private String mapToCFG(int foodGroupId) {
         switch (foodGroupId) {
-            case 9:
-            case 11:
-                return "Vegetables & Fruits";  // Fruits and Vegetables
-            case 8:
-            case 18:
-            case 20:
-                return "Whole Grains";         // Cereals, Grains
-            case 1:
-            case 5:
-            case 7:
-            case 10:
-            case 12:
-            case 13:
-            case 15:
-            case 16:
-            case 17:
-                return "Protein Foods";        // Dairy, Meats, Nuts, Fish, Legumes
+            // Vegetables & Fruits
+            case 9:  // Fruits and fruit juices
+            case 11: // Vegetables and vegetable products
+                return "Vegetables & Fruits";
+
+            // Whole Grains
+            case 8:  // Breakfast cereals
+            case 18: // Baked Products
+            case 20: // Cereals, Grains and Pasta
+                return "Whole Grains";
+
+            // Protein Foods
+            case 1:  // Dairy and Egg Products
+            case 3:  // Babyfoods (some are protein-based)
+            case 5:  // Poultry Products
+            case 7:  // Sausages and Luncheon meats
+            case 10: // Pork Products
+            case 12: // Nuts and Seeds
+            case 13: // Beef Products
+            case 15: // Finfish and Shellfish Products
+            case 16: // Legumes and Legume Products
+            case 17: // Lamb, Veal and Game
+            case 22: // Mixed Dishes
+                return "Protein Foods";
+
             default:
-                return null; // Not mapped to CFG
+                return null; // Not mapped to a CFG category
         }
     }
     
