@@ -65,3 +65,4 @@ Compare nutritional impact of original vs. swapped meals over time.
 Includes per meal, cumulative, and CFG comparisons.
 Charts rendered with JFreeChart for rich, interactive insights.
 
+
