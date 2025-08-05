@@ -1,3 +1,5 @@
+//ApplySwaoToAllMeals start
+
 package Models;
 
 import DAO.FoodDAO;
@@ -54,38 +56,57 @@ public class ApplySwapToAllMeals implements SwapCommand {
         }
     }
 
+    //code before refactoring
+    
+//    private List<Integer> getMealIdsForMeals(List<Meal> meals) {
+//        List<Integer> mealIds = new ArrayList<>();
+//        List<String> mealStrings = foodDAO.getLoggedMealsWithCaloriesForUser(userId);
+//
+//        for (Meal meal : meals) {
+//            int mealId = -1;
+//            for (String s : mealStrings) {
+//                try {
+//                    // Extract MealID from <span style='display:none'>NN</span> using regex
+//                    Pattern pattern = Pattern.compile("<span style='display:none'>([0-9]+)</span>");
+//                    Matcher matcher = pattern.matcher(s);
+//                    if (matcher.find()) {
+//                        String mealIdStr = matcher.group(1);
+//                        System.out.println("Extracted mealIdStr from HTML: " + mealIdStr);
+//                        int currentMealId = Integer.parseInt(mealIdStr);
+//                        List<MealIngredient> ingredients = foodDAO.getMealIngredients(currentMealId);
+//                        Meal tempMeal = new Meal(ingredients);
+//                        if (mealToString(tempMeal).equals(mealToString(meal))) {
+//                            mealId = currentMealId;
+//                            break;
+//                        }
+//                    } else {
+//                        System.err.println("No MealID found in HTML string: " + s);
+//                    }
+//                } catch (NumberFormatException e) {
+//                    System.err.println("Failed to parse meal ID from string: " + s);
+//                    e.printStackTrace();
+//                } catch (Exception e) {
+//                    System.err.println("Error processing meal string: " + s);
+//                    e.printStackTrace();
+//                }
+//            }
+//            if (mealId != -1) {
+//                mealIds.add(mealId);
+//            } else {
+//                System.err.println("No MealID found for meal: " + mealToString(meal));
+//            }
+//        }
+//        return mealIds;
+//    }
+    
+    //-------------------------------------------
+    
     private List<Integer> getMealIdsForMeals(List<Meal> meals) {
         List<Integer> mealIds = new ArrayList<>();
         List<String> mealStrings = foodDAO.getLoggedMealsWithCaloriesForUser(userId);
 
         for (Meal meal : meals) {
-            int mealId = -1;
-            for (String s : mealStrings) {
-                try {
-                    // Extract MealID from <span style='display:none'>NN</span> using regex
-                    Pattern pattern = Pattern.compile("<span style='display:none'>([0-9]+)</span>");
-                    Matcher matcher = pattern.matcher(s);
-                    if (matcher.find()) {
-                        String mealIdStr = matcher.group(1);
-                        System.out.println("Extracted mealIdStr from HTML: " + mealIdStr);
-                        int currentMealId = Integer.parseInt(mealIdStr);
-                        List<MealIngredient> ingredients = foodDAO.getMealIngredients(currentMealId);
-                        Meal tempMeal = new Meal(ingredients);
-                        if (mealToString(tempMeal).equals(mealToString(meal))) {
-                            mealId = currentMealId;
-                            break;
-                        }
-                    } else {
-                        System.err.println("No MealID found in HTML string: " + s);
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("Failed to parse meal ID from string: " + s);
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    System.err.println("Error processing meal string: " + s);
-                    e.printStackTrace();
-                }
-            }
+            int mealId = findMatchingMealId(meal, mealStrings);
             if (mealId != -1) {
                 mealIds.add(mealId);
             } else {
@@ -94,6 +115,45 @@ public class ApplySwapToAllMeals implements SwapCommand {
         }
         return mealIds;
     }
+
+    private int findMatchingMealId(Meal targetMeal, List<String> mealStrings) {
+        for (String html : mealStrings) {
+            int currentMealId = extractMealIdFromHtml(html);
+            if (currentMealId == -1) continue;
+
+            try {
+                List<MealIngredient> ingredients = foodDAO.getMealIngredients(currentMealId);
+                Meal dbMeal = new Meal(ingredients);
+                if (mealToString(dbMeal).equals(mealToString(targetMeal))) {
+                    return currentMealId;
+                }
+            } catch (Exception e) {
+                System.err.println("Error retrieving or comparing meal for ID: " + currentMealId);
+                e.printStackTrace();
+            }
+        }
+        return -1;
+    }
+
+    private int extractMealIdFromHtml(String html) {
+        try {
+            Pattern pattern = Pattern.compile("<span style='display:none'>([0-9]+)</span>");
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                String mealIdStr = matcher.group(1);
+                System.out.println("Extracted mealIdStr from HTML: " + mealIdStr);
+                return Integer.parseInt(mealIdStr);
+            } else {
+                System.err.println("No MealID found in HTML string: " + html);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Failed to parse meal ID from HTML: " + html);
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    
+  //-------------------------------------------
 
     private String mealToString(Meal meal) {
         if (meal == null || meal.getItems() == null) return "No data";

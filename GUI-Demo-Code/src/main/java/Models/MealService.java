@@ -1,3 +1,5 @@
+//MealService.java start
+
 package Models;
 
 import DAO.FoodDAO;
@@ -140,4 +142,27 @@ public class MealService {
         }
         return sb.toString();
     }
+    
+    public Meal fetchMealById(int mealId) {
+        int userId = Session.getCurrentUserId();
+        if (userId <= 0) {
+            System.err.println("User not logged in or invalid user ID.");
+            return null;
+        }
+
+        try {
+            List<MealIngredient> ingredients = foodDAO.getMealIngredients(mealId);
+            if (ingredients != null && !ingredients.isEmpty()) {
+                return new Meal(ingredients);
+            } else {
+                System.out.println("No ingredients found for meal ID: " + mealId);
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching meal by ID: " + mealId);
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
 }

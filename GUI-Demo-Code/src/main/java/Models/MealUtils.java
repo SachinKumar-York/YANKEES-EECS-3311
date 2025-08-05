@@ -1,3 +1,5 @@
+//MealUtils.java start
+
 package Models;
 
 import DAO.NutrientDatabase;
@@ -35,32 +37,54 @@ public class MealUtils {
         return new Meal(newItems);
     }
     
+//code before refactoring
 
-
-    /**
-     * Calculate total nutrient amounts for a meal with default nutrient symbols and NutrientDatabase.
-     */
+//    /**
+//     * Calculate total nutrient amounts for a meal with default nutrient symbols and NutrientDatabase.
+//     */
+//    public static Map<String, Float> calculateMealNutrients(Meal meal) {
+//        NutrientDatabase nutrientDatabase = new NutrientDatabase();
+//        return calculateMealNutrients(meal, nutrientDatabase, DEFAULT_NUTRIENT_SYMBOLS);
+//    }
+//
+//    /**
+//     * Calculate total nutrient amounts for a meal given nutrient symbols and NutrientDatabase.
+//     */
+//    public static Map<String, Float> calculateMealNutrients(Meal meal, NutrientDatabase nutrientDatabase, List<String> nutrientSymbols) {
+//        Map<String, Float> totals = new HashMap<>();
+//        if (meal == null || nutrientDatabase == null) return totals;
+//
+//        for (MealIngredient mi : meal.getItems()) {
+//            Map<String, Float> nutrients = getNutrients(mi.getFood(), mi.getQuantity());
+//            for (String symbol : nutrientSymbols) {
+//                float val = nutrients.getOrDefault(symbol, 0f);
+//                totals.put(symbol, totals.getOrDefault(symbol, 0f) + val);
+//            }
+//        }
+//        return totals;
+//    }
+    
+    //--------------------------------------
+    
     public static Map<String, Float> calculateMealNutrients(Meal meal) {
-        NutrientDatabase nutrientDatabase = new NutrientDatabase();
-        return calculateMealNutrients(meal, nutrientDatabase, DEFAULT_NUTRIENT_SYMBOLS);
+        return calculateMealNutrients(meal, new NutrientDatabase(), DEFAULT_NUTRIENT_SYMBOLS);
     }
 
-    /**
-     * Calculate total nutrient amounts for a meal given nutrient symbols and NutrientDatabase.
-     */
-    public static Map<String, Float> calculateMealNutrients(Meal meal, NutrientDatabase nutrientDatabase, List<String> nutrientSymbols) {
+    public static Map<String, Float> calculateMealNutrients(Meal meal, NutrientDatabase db, List<String> symbols) {
         Map<String, Float> totals = new HashMap<>();
-        if (meal == null || nutrientDatabase == null) return totals;
+        if (meal == null || db == null || symbols == null) return totals;
 
         for (MealIngredient mi : meal.getItems()) {
-            Map<String, Float> nutrients = getNutrients(mi.getFood(), mi.getQuantity());
-            for (String symbol : nutrientSymbols) {
-                float val = nutrients.getOrDefault(symbol, 0f);
-                totals.put(symbol, totals.getOrDefault(symbol, 0f) + val);
+            Map<String, Float> nutrients = db.getNutrients(mi.getFood(), mi.getQuantity());
+            for (String symbol : symbols) {
+                float value = nutrients.getOrDefault(symbol, 0f);
+                totals.put(symbol, totals.getOrDefault(symbol, 0f) + value);
             }
         }
         return totals;
     }
+    
+    //--------------------------------------
 
     /**
      * Fetch nutrient map for a food item at a certain quantity.

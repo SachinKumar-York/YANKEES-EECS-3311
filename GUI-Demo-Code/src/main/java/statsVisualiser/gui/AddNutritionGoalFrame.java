@@ -1,3 +1,5 @@
+//AddNutritionalGoalFrame.java start
+
 package statsVisualiser.gui;
 
 import DAO.FoodDAO;
@@ -11,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class AddNutritionGoalFrame extends JFrame {
+	
+	private final MealService mealService = new MealService();
+
 
     // Display name → NutrientSymbol map
     private static final Map<String, String> DISPLAY_TO_SYMBOL = new LinkedHashMap<String, String>() {{
@@ -56,13 +61,13 @@ public class AddNutritionGoalFrame extends JFrame {
         JPanel nutrientBreakdownPanel = new JPanel();
         nutrientBreakdownPanel.setLayout(new BoxLayout(nutrientBreakdownPanel, BoxLayout.Y_AXIS));
 
-        Meal meal = fetchMealById(mealId);
+        Meal meal = mealService.fetchMealById(mealId);
         if (meal != null) {
             JLabel breakdownTitle = new JLabel("Original meal nutrient breakdown:");
             breakdownTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
             nutrientBreakdownPanel.add(breakdownTitle);
 
-            Map<String, Float> totals = calculateMealNutrients(meal);
+            Map<String, Float> totals = MealUtils.calculateMealNutrients(meal);
             for (Map.Entry<String, String> entry : DISPLAY_TO_SYMBOL.entrySet()) {
                 String display = entry.getKey();
                 String symbol = entry.getValue();
@@ -136,27 +141,78 @@ public class AddNutritionGoalFrame extends JFrame {
         pack();
     }
 
+    // code before refactoring
+    
+//    private void handleGetSuggestedSwaps() {
+//        try {
+//            CompositeGoal compositeGoal = new CompositeGoal();
+//
+//            String selected1 = (String) nutrientBox1.getSelectedItem();
+//            String nutrientSymbol1 = DISPLAY_TO_SYMBOL.get(selected1);
+//            float delta1 = Float.parseFloat(deltaField1.getText().trim());
+//            boolean increase1 = increaseBox1.isSelected();
+//            compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol1, delta1, increase1));
+//
+//            if (enableSecondGoal.isSelected()) {
+//                String selected2 = (String) nutrientBox2.getSelectedItem();
+//                String nutrientSymbol2 = DISPLAY_TO_SYMBOL.get(selected2);
+//                float delta2 = Float.parseFloat(deltaField2.getText().trim());
+//                boolean increase2 = increaseBox2.isSelected();
+//                compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol2, delta2, increase2));
+//            }
+//
+//            GoalRequest request = new GoalRequest(compositeGoal);
+//
+//            Meal meal = fetchMealById(mealId);
+//            if (meal == null || meal.getItems().isEmpty()) {
+//                JOptionPane.showMessageDialog(this,
+//                        "Meal data could not be loaded or is empty.",
+//                        "Error", JOptionPane.ERROR_MESSAGE);
+//                return;
+//            }
+//
+//            List<SwapSuggestion> suggestions = swapEngine.generateSwaps(meal, request);
+//
+//            if (suggestions.isEmpty()) {
+//                JOptionPane.showMessageDialog(this,
+//                        "No suitable food swaps found for the given goals.",
+//                        "No Suggestions", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal, userId);
+//                suggestionsFrame.setVisible(true);
+//            }
+//
+//        } catch (NumberFormatException e) {
+//            JOptionPane.showMessageDialog(this,
+//                    "Please enter valid numeric delta values.",
+//                    "Input Error", JOptionPane.ERROR_MESSAGE);
+//        } catch (IllegalStateException e) {
+//            JOptionPane.showMessageDialog(this,
+//                    e.getMessage(),
+//                    "Goal Limit Exceeded", JOptionPane.ERROR_MESSAGE);
+//        } catch (Exception e) {
+//            JOptionPane.showMessageDialog(this,
+//                    "Unexpected error: " + e.getMessage(),
+//                    "Error", JOptionPane.ERROR_MESSAGE);
+//            e.printStackTrace();
+//        }
+//    }
+    
+    //------------------------------------
+    
     private void handleGetSuggestedSwaps() {
+        if (!isValidInput()) {
+            JOptionPane.showMessageDialog(this,
+                    "Please enter valid numeric delta values.",
+                    "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         try {
-            CompositeGoal compositeGoal = new CompositeGoal();
+            CompositeGoal goal = buildCompositeGoal();
+            GoalRequest request = new GoalRequest(goal);
+            Meal meal = mealService.fetchMealById(mealId);
 
-            String selected1 = (String) nutrientBox1.getSelectedItem();
-            String nutrientSymbol1 = DISPLAY_TO_SYMBOL.get(selected1);
-            float delta1 = Float.parseFloat(deltaField1.getText().trim());
-            boolean increase1 = increaseBox1.isSelected();
-            compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol1, delta1, increase1));
-
-            if (enableSecondGoal.isSelected()) {
-                String selected2 = (String) nutrientBox2.getSelectedItem();
-                String nutrientSymbol2 = DISPLAY_TO_SYMBOL.get(selected2);
-                float delta2 = Float.parseFloat(deltaField2.getText().trim());
-                boolean increase2 = increaseBox2.isSelected();
-                compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol2, delta2, increase2));
-            }
-
-            GoalRequest request = new GoalRequest(compositeGoal);
-
-            Meal meal = fetchMealById(mealId);
             if (meal == null || meal.getItems().isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                         "Meal data could not be loaded or is empty.",
@@ -165,20 +221,8 @@ public class AddNutritionGoalFrame extends JFrame {
             }
 
             List<SwapSuggestion> suggestions = swapEngine.generateSwaps(meal, request);
+            handleSwapResults(suggestions, meal);
 
-            if (suggestions.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "No suitable food swaps found for the given goals.",
-                        "No Suggestions", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal, userId);
-                suggestionsFrame.setVisible(true);
-            }
-
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Please enter valid numeric delta values.",
-                    "Input Error", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalStateException e) {
             JOptionPane.showMessageDialog(this,
                     e.getMessage(),
@@ -191,26 +235,76 @@ public class AddNutritionGoalFrame extends JFrame {
         }
     }
 
-    private Meal fetchMealById(int mealId) {
+    private boolean isValidInput() {
         try {
-            List<MealIngredient> ingredients = foodDAO.getMealIngredients(mealId);
-            if (ingredients == null || ingredients.isEmpty()) return null;
-            return new Meal(ingredients);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            Float.parseFloat(deltaField1.getText().trim());
+            if (enableSecondGoal.isSelected()) {
+                Float.parseFloat(deltaField2.getText().trim());
+            }
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 
-    private Map<String, Float> calculateMealNutrients(Meal meal) {
-        Map<String, Float> totals = new java.util.HashMap<>();
-        for (MealIngredient mi : meal.getItems()) {
-            Map<String, Float> nutrients = nutrientDatabase.getNutrients(mi.getFood(), mi.getQuantity());
-            for (String symbol : DISPLAY_TO_SYMBOL.values()) {
-                float value = nutrients.getOrDefault(symbol, 0f);
-                totals.put(symbol, totals.getOrDefault(symbol, 0f) + value);
-            }
+    private CompositeGoal buildCompositeGoal() {
+        CompositeGoal compositeGoal = new CompositeGoal();
+
+        String selected1 = (String) nutrientBox1.getSelectedItem();
+        String nutrientSymbol1 = DISPLAY_TO_SYMBOL.get(selected1);
+        float delta1 = Float.parseFloat(deltaField1.getText().trim());
+        boolean increase1 = increaseBox1.isSelected();
+        compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol1, delta1, increase1));
+
+        if (enableSecondGoal.isSelected()) {
+            String selected2 = (String) nutrientBox2.getSelectedItem();
+            String nutrientSymbol2 = DISPLAY_TO_SYMBOL.get(selected2);
+            float delta2 = Float.parseFloat(deltaField2.getText().trim());
+            boolean increase2 = increaseBox2.isSelected();
+            compositeGoal.addGoal(new NutritionalGoal(nutrientSymbol2, delta2, increase2));
         }
-        return totals;
+
+        return compositeGoal;
     }
+
+    private void handleSwapResults(List<SwapSuggestion> suggestions, Meal meal) {
+        if (suggestions.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No suitable food swaps found for the given goals.",
+                    "No Suggestions", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            SwapSuggestionsFrame suggestionsFrame = new SwapSuggestionsFrame(suggestions, meal, userId);
+            suggestionsFrame.setVisible(true);
+        }
+    }
+
+    
+  //------------------------------------
+    
+    //code below removed from here - moved to MealService.java due to refactoring
+
+//    private Meal fetchMealById(int mealId) {
+//        try {
+//            List<MealIngredient> ingredients = foodDAO.getMealIngredients(mealId);
+//            if (ingredients == null || ingredients.isEmpty()) return null;
+//            return new Meal(ingredients);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
+    
+    // (code below removed, solving code smell 10)
+
+//    private Map<String, Float> calculateMealNutrients(Meal meal) {
+//        Map<String, Float> totals = new java.util.HashMap<>();
+//        for (MealIngredient mi : meal.getItems()) {
+//            Map<String, Float> nutrients = nutrientDatabase.getNutrients(mi.getFood(), mi.getQuantity());
+//            for (String symbol : DISPLAY_TO_SYMBOL.values()) {
+//                float value = nutrients.getOrDefault(symbol, 0f);
+//                totals.put(symbol, totals.getOrDefault(symbol, 0f) + value);
+//            }
+//        }
+//        return totals;
+//    }
 }
